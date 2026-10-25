@@ -7,7 +7,7 @@ import { VitePWA } from 'vite-plugin-pwa'
 export default defineConfig({
   base: '/gym-lipka/',
   define: {
-    __APP_VERSION__: JSON.stringify(`0.1.0 (${new Date().toISOString().slice(0, 10)})`),
+    __APP_VERSION__: JSON.stringify(`0.2.0 (${new Date().toISOString().slice(0, 10)})`),
   },
   plugins: [
     react(),

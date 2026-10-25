@@ -50,7 +50,58 @@ export const CloseIcon = ({ size = 20 }: P) => (
   </svg>
 )
 
-export const CheckIcon = ({ size = 16 }: P) => (
+export const BackIcon = ({ size = 20 }: P) => (
+  <svg {...base(size)}>
+    <path d="M15 6l-6 6 6 6" />
+  </svg>
+)
+
+export const ChevronIcon = ({ size = 18 }: P) => (
+  <svg {...base(size)}>
+    <path d="M9 6l6 6-6 6" />
+  </svg>
+)
+
+export const UpIcon = ({ size = 18 }: P) => (
+  <svg {...base(size)}>
+    <path d="M6 15l6-6 6 6" />
+  </svg>
+)
+
+export const DownIcon = ({ size = 18 }: P) => (
+  <svg {...base(size)}>
+    <path d="M6 9l6 6 6-6" />
+  </svg>
+)
+
+export const SearchIcon = ({ size = 20 }: P) => (
+  <svg {...base(size)}>
+    <circle cx="11" cy="11" r="7" />
+    <path d="M20 20l-3.5-3.5" />
+  </svg>
+)
+
+export const DotsIcon = ({ size = 20 }: P) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <circle cx="5" cy="12" r="2" />
+    <circle cx="12" cy="12" r="2" />
+    <circle cx="19" cy="12" r="2" />
+  </svg>
+)
+
+export const TrashIcon = ({ size = 18 }: P) => (
+  <svg {...base(size)}>
+    <path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" />
+  </svg>
+)
+
+export const ListBulletIcon = ({ size = 20 }: P) => (
+  <svg {...base(size)}>
+    <path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01" />
+  </svg>
+)
+
+export const CheckIcon =({ size = 16 }: P) => (
   <svg {...base(size)} strokeWidth={3}>
     <path d="M5 12l5 5 9-10" />
   </svg>

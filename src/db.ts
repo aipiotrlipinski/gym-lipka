@@ -38,6 +38,15 @@ export interface PlanDay {
   exercises: PlanExercise[]
 }
 
+/** Ćwiczenie w konkretnym treningu: kolejność, przerwa i notatka. Serie są w tabeli `sets`. */
+export interface WorkoutItem {
+  exerciseId: number
+  restSec: number
+  repsMin?: number
+  repsMax?: number
+  note?: string
+}
+
 export interface Workout {
   id: number
   planDayId?: number
@@ -46,6 +55,7 @@ export interface Workout {
   endedAt?: number
   status: 'trwa' | 'zakończony'
   note?: string
+  items: WorkoutItem[]
 }
 
 export interface WorkoutSet {
@@ -82,6 +92,34 @@ db.version(1).stores({
   sets: '++id, workoutId, exerciseId, [exerciseId+workoutId]',
   body: '++id, date',
 })
+
+/**
+ * Przy pierwszym uruchomieniu wgrywa bazę ćwiczeń i plan startowy.
+ * Bezpieczne do wielokrotnego wywołania — działa tylko, gdy baza ćwiczeń jest pusta.
+ */
+export async function ensureSeed() {
+  const { BUILTIN_EXERCISES, STARTER_PLAN } = await import('./data/exercises')
+  await db.transaction('rw', db.exercises, db.plans, db.planDays, async () => {
+    if ((await db.exercises.count()) > 0) return
+    await db.exercises.bulkAdd(
+      BUILTIN_EXERCISES.map(([name, muscle, equipment]) => ({ name, muscle, equipment, custom: false }) as Exercise),
+    )
+    if ((await db.plans.count()) > 0) return
+    const all = await db.exercises.toArray()
+    const byName = new Map(all.map((e) => [e.name, e.id]))
+    const planId = await db.plans.add({ name: STARTER_PLAN.name, active: true, createdAt: Date.now() } as Plan)
+    for (const [i, day] of STARTER_PLAN.days.entries()) {
+      await db.planDays.add({
+        planId,
+        name: day.name,
+        order: i,
+        exercises: day.exercises
+          .filter(([n]) => byName.has(n))
+          .map(([n, sets, repsMin, repsMax, restSec]) => ({ exerciseId: byName.get(n)!, sets, repsMin, repsMax, restSec })),
+      } as PlanDay)
+    }
+  })
+}
 
 /**
  * Prosi przeglądarkę o trwały zapis, żeby Android nie wyczyścił danych

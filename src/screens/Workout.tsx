@@ -1,0 +1,518 @@
+import { useLiveQuery } from 'dexie-react-hooks'
+import { useEffect, useMemo, useState } from 'react'
+import { db, type Exercise, type WorkoutSet } from '../db'
+import { back, navigate } from '../router'
+import { clock, kg, plural, setLabel } from '../lib/format'
+import { exerciseBests, lastSessionSets, livePRs } from '../lib/stats'
+import { rest, unlockAudio, useNow, useRest, useWakeLock } from '../lib/rest'
+import {
+  addExercise,
+  addSet,
+  cycleType,
+  deleteWorkout,
+  finishWorkout,
+  removeExercise,
+  setsOf,
+  swapExercise,
+} from '../lib/workout'
+import { Badge, Button, Card, Confirm, Empty, RoundButton, Sheet, Stepper, TextField } from '../components/ui'
+import { BackIcon, CheckIcon, ListBulletIcon } from '../components/icons'
+import { ExercisePicker, useExercises } from '../components/exercises'
+
+const TYPE_SHORT = { rozgrzewka: 'R', robocza: '', drop: 'D' } as const
+const TYPE_LABEL = { rozgrzewka: 'Rozgrzewkowa', robocza: 'Robocza', drop: 'Drop set' } as const
+
+export function Workout({ id }: { id: number }) {
+  const workout = useLiveQuery(() => db.workouts.get(id), [id])
+  const allSets = useLiveQuery(() => setsOf(id), [id])
+  const exercises = useExercises()
+  const live = workout?.status === 'trwa'
+  useWakeLock(live)
+  const now = useNow(live ? 1000 : 0)
+  const restState = useRest()
+
+  const [idx, setIdx] = useState<number | null>(null)
+  const [editingSet, setEditingSet] = useState<number | null>(null)
+  const [sheet, setSheet] = useState<null | 'list' | 'add' | 'menu' | 'swap' | 'finish' | 'discard'>(null)
+  const [swapPermanent, setSwapPermanent] = useState(false)
+
+  const items = workout?.items ?? []
+
+  // Bieżące ćwiczenie: pierwsze z niezaliczonymi seriami (przy wejściu na ekran).
+  useEffect(() => {
+    if (idx !== null || !workout || !allSets) return
+    const first = workout.items.findIndex((it) => allSets.some((s) => s.exerciseId === it.exerciseId && !s.done))
+    setIdx(first >= 0 ? first : 0)
+  }, [idx, workout, allSets])
+
+  const cur = items[Math.min(idx ?? 0, Math.max(0, items.length - 1))]
+  const exercise = exercises.find((e) => e.id === cur?.exerciseId)
+  const sets = useMemo(() => (allSets ?? []).filter((s) => s.exerciseId === cur?.exerciseId), [allSets, cur?.exerciseId])
+
+  const prev = useLiveQuery(async () => (cur ? lastSessionSets(cur.exerciseId, id) : []), [cur?.exerciseId, id])
+  const bests = useLiveQuery(
+    async () => (cur ? exerciseBests(cur.exerciseId, id, workout?.startedAt) : undefined),
+    [cur?.exerciseId, id, workout?.startedAt],
+  )
+  const prs = useMemo(() => livePRs(sets, bests), [sets, bests])
+
+  if (workout === undefined || allSets === undefined) return null
+  if (!workout) return <Empty title="Ten trening już nie istnieje" />
+
+  const i = Math.min(idx ?? 0, Math.max(0, items.length - 1))
+  const activeSetId = editingSet ?? sets.find((s) => !s.done)?.id
+  const nextItem = items[i + 1]
+  const nextEx = exercises.find((e) => e.id === nextItem?.exerciseId)
+  const nextCount = (allSets ?? []).filter((s) => s.exerciseId === nextItem?.exerciseId).length
+  const name = (eid: number) => exercises.find((e) => e.id === eid)?.name ?? '?'
+
+  const complete = async (s: WorkoutSet) => {
+    unlockAudio()
+    const wasEditing = editingSet !== null
+    await db.sets.update(s.id, { done: true })
+    setEditingSet(null)
+    if (!live || wasEditing) return
+    const restLeft = sets.filter((x) => !x.done && x.id !== s.id)
+    if (cur.restSec > 0 && (restLeft.length > 0 || nextItem)) rest.start(cur.restSec, exercise?.name ?? '')
+    // Po ostatniej serii ćwiczenia przechodzimy do następnego niezakończonego.
+    if (restLeft.length === 0) {
+      const nxt = items.findIndex(
+        (it, j) => j > i && allSets.some((x) => x.exerciseId === it.exerciseId && !x.done),
+      )
+      if (nxt >= 0) setIdx(nxt)
+    }
+  }
+
+  const finish = async () => {
+    rest.stop()
+    await finishWorkout(id)
+    navigate({ name: 'podsumowanie', id }, true)
+  }
+
+  const elapsed = live ? (now - workout.startedAt) / 1000 : ((workout.endedAt ?? workout.startedAt) - workout.startedAt) / 1000
+  const undoneCount = allSets.filter((s) => !s.done).length
+
+  return (
+    <div className="flex min-h-full flex-col">
+      {/* Pasek górny */}
+      <div className="flex items-center justify-between px-5 pb-2 pt-5">
+        <RoundButton label="Wstecz" onClick={() => back({ name: 'start' })}>
+          <BackIcon />
+        </RoundButton>
+        <span className="text-sm tabular-nums text-muted">{clock(elapsed)}</span>
+        {live ? (
+          <Button variant="outline" onClick={() => setSheet('finish')} className="!rounded-full">
+            Zakończ
+          </Button>
+        ) : (
+          <Button variant="outline" onClick={() => back({ name: 'sesja', id })} className="!rounded-full">
+            Gotowe
+          </Button>
+        )}
+      </div>
+
+      {items.length === 0 ? (
+        <Empty title="Pusty trening">
+          Dodaj pierwsze ćwiczenie.
+          <Button className="mt-3 w-full" onClick={() => setSheet('add')}>
+            + Dodaj ćwiczenie
+          </Button>
+        </Empty>
+      ) : (
+        <>
+          {/* Nagłówek ćwiczenia */}
+          <div className="flex items-start gap-3 px-5 pb-4 pt-2">
+            <button
+              onClick={() => setSheet('menu')}
+              className="flex min-w-0 flex-1 flex-col items-start gap-1 border-0 bg-transparent p-0 text-left"
+            >
+              <span className="text-[13px] font-bold tracking-wide text-accent">
+                {workout.name.toUpperCase()} · ĆWICZENIE {i + 1} Z {items.length}
+              </span>
+              <span className="text-[26px] font-extrabold leading-tight tracking-tight text-ink">{exercise?.name ?? '…'}</span>
+              {cur.note && <span className="text-[13px] text-muted">Notatka: {cur.note}</span>}
+            </button>
+            <RoundButton label="Lista ćwiczeń" onClick={() => setSheet('list')}>
+              <ListBulletIcon />
+            </RoundButton>
+          </div>
+
+          {/* Serie */}
+          <Card className="mx-5 flex flex-col gap-2 p-3.5">
+            {sets.map((s, n) => {
+              const p = prev?.[n]
+              const pr = prs.get(s.id)
+              if (s.id === activeSetId)
+                return (
+                  <ActiveSet
+                    key={s.id}
+                    set={s}
+                    number={sets.filter((x, k) => k <= n && x.type !== 'rozgrzewka').length}
+                    prevLabel={p ? setLabel(p.weightKg, p.reps) : undefined}
+                    repsHint={cur.repsMin ? `${cur.repsMin}–${cur.repsMax}` : undefined}
+                    editing={s.done}
+                    exercise={exercise}
+                    onComplete={() => complete(s)}
+                    onUndo={async () => {
+                      await db.sets.update(s.id, { done: false })
+                      setEditingSet(null)
+                    }}
+                    onDelete={async () => {
+                      await db.sets.delete(s.id)
+                      setEditingSet(null)
+                    }}
+                    onCancel={editingSet !== null ? () => setEditingSet(null) : undefined}
+                  />
+                )
+              const workN = sets.filter((x, k) => k <= n && x.type !== 'rozgrzewka').length
+              return (
+                <button
+                  key={s.id}
+                  onClick={() => setEditingSet(s.id)}
+                  className={`flex items-center gap-3 rounded-2xl border-0 bg-row px-3 py-2.5 text-left ${s.done ? 'text-ink' : 'text-muted'}`}
+                >
+                  <span
+                    className={`flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full text-[11px] font-extrabold ${
+                      s.done ? (s.type === 'rozgrzewka' ? 'bg-muted text-card' : 'bg-accent text-on-accent') : 'bg-soft text-muted'
+                    }`}
+                  >
+                    {s.done ? <CheckIcon size={14} /> : TYPE_SHORT[s.type] || workN}
+                  </span>
+                  <span className={`flex-1 text-base tabular-nums ${s.done ? 'font-extrabold' : 'font-semibold'}`}>
+                    {s.weightKg === 0 ? 'MC' : `${kg(s.weightKg)} kg`} × {s.reps}
+                  </span>
+                  {pr ? (
+                    <Badge>{pr}</Badge>
+                  ) : s.type === 'rozgrzewka' ? (
+                    <span className="text-xs text-muted">rozgrzewka</span>
+                  ) : s.type === 'drop' ? (
+                    <span className="text-xs text-muted">drop set</span>
+                  ) : p ? (
+                    <span className="text-xs text-muted">było {setLabel(p.weightKg, p.reps)}</span>
+                  ) : null}
+                </button>
+              )
+            })}
+            <Button variant="ghost" size="sm" onClick={() => addSet(id, cur.exerciseId)} className="self-center">
+              + Dodaj serię
+            </Button>
+          </Card>
+        </>
+      )}
+
+      <div className="flex-1" />
+
+      {/* Timer przerwy i następne ćwiczenie */}
+      {live && restState && (
+        <div className="mx-5 mt-4 flex flex-col gap-2.5 border-0 border-t border-solid border-line pb-1 pt-4">
+          <div className="flex items-center justify-between">
+            <button onClick={() => rest.stop()} className="flex flex-col items-start gap-0.5 border-0 bg-transparent p-0 text-left">
+              <span className="text-xs text-muted">{restState.finished ? 'Przerwa skończona · dotknij, aby zamknąć' : 'Przerwa'}</span>
+              <span className={`text-[32px] font-extrabold leading-none tabular-nums ${restState.finished ? 'text-accent' : 'text-ink'}`}>
+                {clock(restState.left)}
+              </span>
+            </button>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => rest.add(-15)} className="!rounded-full !border-line">
+                −15 s
+              </Button>
+              <Button variant="outline" onClick={() => rest.add(15)} className="!rounded-full !border-line">
+                +15 s
+              </Button>
+            </div>
+          </div>
+          <div className="h-1.5 rounded-full bg-soft">
+            <div className="h-1.5 rounded-full bg-accent transition-[width]" style={{ width: `${Math.min(100, restState.progress * 100)}%` }} />
+          </div>
+        </div>
+      )}
+      {items.length > 0 && (
+        <div
+          className="mx-5 flex justify-between gap-3 pt-3 text-sm text-muted"
+          style={{ paddingBottom: 'max(20px, env(safe-area-inset-bottom))' }}
+        >
+          {nextItem ? (
+            <button onClick={() => setIdx(i + 1)} className="min-w-0 border-0 bg-transparent p-0 text-left text-sm text-muted">
+              Następne: <span className="font-bold text-ink">{nextEx?.name}</span>
+            </button>
+          ) : (
+            <button onClick={() => setSheet('add')} className="border-0 bg-transparent p-0 text-left text-sm font-bold text-accent">
+              + Dodaj ćwiczenie
+            </button>
+          )}
+          {nextItem && <span className="shrink-0">{nextCount} {plural(nextCount, 'seria', 'serie', 'serii')}</span>}
+        </div>
+      )}
+
+      {/* Arkusze */}
+      {sheet === 'list' && (
+        <Sheet title="Ćwiczenia w treningu" onClose={() => setSheet(null)}>
+          <div className="flex flex-col gap-2 px-5 pb-2">
+            {items.map((it, j) => {
+              const ss = allSets.filter((s) => s.exerciseId === it.exerciseId)
+              const d = ss.filter((s) => s.done).length
+              return (
+                <button
+                  key={it.exerciseId}
+                  onClick={() => {
+                    setIdx(j)
+                    setEditingSet(null)
+                    setSheet(null)
+                  }}
+                  className={`flex items-center justify-between gap-3 rounded-2xl bg-card px-4 py-3 text-left ${
+                    j === i ? 'border-2 border-solid border-accent' : 'border border-solid border-line'
+                  }`}
+                >
+                  <span className="text-[15px] font-bold text-ink">
+                    {j + 1}. {name(it.exerciseId)}
+                  </span>
+                  <span className={`shrink-0 text-xs font-bold ${d === ss.length && d > 0 ? 'text-accent' : 'text-muted'}`}>
+                    {d}/{ss.length}
+                  </span>
+                </button>
+              )
+            })}
+            <Button variant="outline" onClick={() => setSheet('add')} className="mt-1">
+              + Dodaj ćwiczenie
+            </Button>
+          </div>
+        </Sheet>
+      )}
+      {sheet === 'add' && (
+        <ExercisePicker
+          title="Dodaj ćwiczenie"
+          exclude={items.map((x) => x.exerciseId)}
+          onClose={() => setSheet(null)}
+          onPick={async (e) => {
+            await addExercise(id, e.id)
+            setIdx(items.length)
+            setEditingSet(null)
+          }}
+        />
+      )}
+      {sheet === 'menu' && cur && (
+        <ExerciseMenu
+          exercise={exercise}
+          note={cur.note ?? ''}
+          canPermanent={workout.planDayId !== undefined}
+          onClose={() => setSheet(null)}
+          onNote={(note) =>
+            db.workouts.update(id, { items: items.map((it) => (it.exerciseId === cur.exerciseId ? { ...it, note: note || undefined } : it)) })
+          }
+          onSwap={(permanent) => {
+            setSwapPermanent(permanent)
+            setSheet('swap')
+          }}
+          onRemove={async () => {
+            await removeExercise(id, cur.exerciseId)
+            setIdx(Math.max(0, i - 1))
+            setSheet(null)
+          }}
+          onProgress={() => navigate({ name: 'cwiczenie', id: cur.exerciseId })}
+        />
+      )}
+      {sheet === 'swap' && cur && (
+        <ExercisePicker
+          title={swapPermanent ? 'Zamień na stałe w planie' : 'Zamień tylko dziś'}
+          exclude={items.map((x) => x.exerciseId)}
+          onClose={() => setSheet(null)}
+          onPick={(e) => swapExercise(id, cur.exerciseId, e.id, swapPermanent)}
+        />
+      )}
+      {sheet === 'finish' && (
+        <FinishSheet
+          note={workout.note ?? ''}
+          undone={undoneCount}
+          onNote={(note) => db.workouts.update(id, { note: note || undefined })}
+          onFinish={finish}
+          onDiscard={() => setSheet('discard')}
+          onClose={() => setSheet(null)}
+        />
+      )}
+      {sheet === 'discard' && (
+        <Confirm
+          title="Odrzucić trening?"
+          text="Wszystkie serie z tego treningu zostaną usunięte. Tego nie da się cofnąć."
+          confirmLabel="Odrzuć trening"
+          danger
+          onConfirm={async () => {
+            rest.stop()
+            await deleteWorkout(id)
+            navigate({ name: 'start' }, true)
+          }}
+          onClose={() => setSheet(null)}
+        />
+      )}
+    </div>
+  )
+}
+
+/** Rozwinięta seria: ciężar i powtórzenia z przyciskami − / + oraz „Zalicz serię”. */
+function ActiveSet({
+  set,
+  number,
+  prevLabel,
+  repsHint,
+  editing,
+  exercise,
+  onComplete,
+  onUndo,
+  onDelete,
+  onCancel,
+}: {
+  set: WorkoutSet
+  number: number
+  prevLabel?: string
+  repsHint?: string
+  editing: boolean
+  exercise?: Exercise
+  onComplete: () => void
+  onUndo: () => void
+  onDelete: () => void
+  onCancel?: () => void
+}) {
+  // Hantle zwykle rosną co 1–2 kg, sztanga i maszyny co 2,5 kg.
+  const step = exercise?.equipment === 'hantle' ? 1 : 2.5
+  const title = set.type === 'rozgrzewka' ? 'Rozgrzewka' : set.type === 'drop' ? `Drop set` : `Seria ${number}`
+  return (
+    <div className="flex flex-col gap-2.5 rounded-[18px] border-2 border-solid border-accent p-3.5">
+      <div className="flex items-center justify-between gap-2 text-[13px]">
+        <button
+          onClick={() => db.sets.update(set.id, { type: cycleType(set.type) })}
+          className="h-8 rounded-full border border-solid border-line bg-transparent px-3 text-[13px] font-extrabold text-ink"
+          aria-label={`Typ serii: ${TYPE_LABEL[set.type]}. Zmień typ`}
+        >
+          {title} ▾
+        </button>
+        <span className="text-muted">
+          {prevLabel ? `ostatnio ${prevLabel}` : repsHint ? `cel ${repsHint} powt.` : 'pierwszy raz'}
+        </span>
+      </div>
+      <div className="grid gap-2" style={{ gridTemplateColumns: 'minmax(0, 1.3fr) minmax(0, 1fr)' }}>
+        <Stepper label="Ciężar" value={set.weightKg} step={step} decimal suffix="kg" onChange={(v) => db.sets.update(set.id, { weightKg: v })} />
+        <Stepper label="Powtórzenia" value={set.reps} step={1} suffix="×" onChange={(v) => db.sets.update(set.id, { reps: Math.round(v) })} />
+      </div>
+      {editing ? (
+        <div className="grid grid-cols-2 gap-2">
+          <Button variant="soft" onClick={onUndo}>
+            Cofnij zaliczenie
+          </Button>
+          <Button onClick={onComplete}>Zapisz</Button>
+        </div>
+      ) : (
+        <Button size="lg" onClick={onComplete}>
+          Zalicz serię
+        </Button>
+      )}
+      <div className="flex justify-between">
+        <Button variant="danger" size="sm" onClick={onDelete}>
+          Usuń serię
+        </Button>
+        {onCancel && (
+          <Button variant="ghost" size="sm" onClick={onCancel}>
+            Zwiń
+          </Button>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function ExerciseMenu({
+  exercise,
+  note,
+  canPermanent,
+  onClose,
+  onNote,
+  onSwap,
+  onRemove,
+  onProgress,
+}: {
+  exercise?: Exercise
+  note: string
+  canPermanent: boolean
+  onClose: () => void
+  onNote: (n: string) => void
+  onSwap: (permanent: boolean) => void
+  onRemove: () => void
+  onProgress: () => void
+}) {
+  const [n, setN] = useState(note)
+  return (
+    <Sheet title={exercise?.name ?? 'Ćwiczenie'} onClose={onClose}>
+      <div className="flex flex-col gap-2 px-5 pb-2">
+        <TextField
+          label="Notatka do ćwiczenia (na dziś)"
+          value={n}
+          placeholder="np. bolał bark, ustawienie 4"
+          onChange={(v) => {
+            setN(v)
+            onNote(v)
+          }}
+        />
+        {exercise?.note && <p className="m-0 text-[13px] text-muted">Stała notatka: {exercise.note}</p>}
+        <Button variant="soft" onClick={() => onSwap(false)} className="mt-2">
+          Zamień ćwiczenie — tylko dziś
+        </Button>
+        {canPermanent && (
+          <Button variant="soft" onClick={() => onSwap(true)}>
+            Zamień ćwiczenie — na stałe w planie
+          </Button>
+        )}
+        <Button variant="soft" onClick={onProgress}>
+          Zobacz postęp i rekordy
+        </Button>
+        <Button variant="danger" onClick={onRemove}>
+          Usuń z tego treningu
+        </Button>
+      </div>
+    </Sheet>
+  )
+}
+
+function FinishSheet({
+  note,
+  undone,
+  onNote,
+  onFinish,
+  onDiscard,
+  onClose,
+}: {
+  note: string
+  undone: number
+  onNote: (n: string) => void
+  onFinish: () => void
+  onDiscard: () => void
+  onClose: () => void
+}) {
+  const [n, setN] = useState(note)
+  return (
+    <Sheet title="Zakończyć trening?" onClose={onClose}>
+      <div className="flex flex-col gap-3 px-5 pb-2">
+        {undone > 0 && (
+          <p className="m-0 text-[15px] text-muted">
+            Niezaliczone serie ({undone}) nie zostaną zapisane w historii.
+          </p>
+        )}
+        <TextField
+          label="Notatka do treningu (opcjonalnie)"
+          value={n}
+          placeholder="np. mało snu, dobra forma"
+          onChange={(v) => {
+            setN(v)
+            onNote(v)
+          }}
+        />
+        <Button size="lg" onClick={onFinish}>
+          Zakończ i zapisz
+        </Button>
+        <Button variant="ghost" onClick={onClose}>
+          Wróć do treningu
+        </Button>
+        <Button variant="danger" onClick={onDiscard}>
+          Odrzuć trening
+        </Button>
+      </div>
+    </Sheet>
+  )
+}
