@@ -4,6 +4,7 @@ import { db, type Exercise, type WorkoutSet } from '../db'
 import { back, navigate } from '../router'
 import { clock, kg, plural, setLabel } from '../lib/format'
 import { exerciseBests, lastSessionSets, livePRs } from '../lib/stats'
+import { suggest } from '../lib/progress'
 import { rest, unlockAudio, useNow, useRest, useWakeLock } from '../lib/rest'
 import {
   addExercise,
@@ -18,6 +19,7 @@ import {
 import { Badge, Button, Card, Confirm, Empty, RoundButton, Sheet, Stepper, TextField } from '../components/ui'
 import { BackIcon, CheckIcon, ListBulletIcon } from '../components/icons'
 import { ExercisePicker, useExercises } from '../components/exercises'
+import { TipsToggle } from '../components/Tips'
 
 const TYPE_SHORT = { rozgrzewka: 'R', robocza: '', drop: 'D' } as const
 const TYPE_LABEL = { rozgrzewka: 'Rozgrzewkowa', robocza: 'Robocza', drop: 'Drop set' } as const
@@ -55,6 +57,8 @@ export function Workout({ id }: { id: number }) {
     [cur?.exerciseId, id, workout?.startedAt],
   )
   const prs = useMemo(() => livePRs(sets, bests), [sets, bests])
+  const suggestion = useMemo(() => (prev ? suggest(exercise, cur, prev) : null), [prev, exercise, cur])
+  const [hiddenTip, setHiddenTip] = useState<number | null>(null)
 
   if (workout === undefined || allSets === undefined) return null
   if (!workout) return <Empty title="Ten trening już nie istnieje" />
@@ -65,6 +69,34 @@ export function Workout({ id }: { id: number }) {
   const nextEx = exercises.find((e) => e.id === nextItem?.exerciseId)
   const nextCount = (allSets ?? []).filter((s) => s.exerciseId === nextItem?.exerciseId).length
   const name = (eid: number) => exercises.find((e) => e.id === eid)?.name ?? '?'
+
+  /**
+   * Zmiana ciężaru/powtórzeń w niezaliczonej serii przechodzi też na kolejne niezaliczone serie
+   * tego samego typu — wpisujesz raz, a nie w każdej serii od zera.
+   */
+  const updateForward = async (s: WorkoutSet, patch: Partial<Pick<WorkoutSet, 'weightKg' | 'reps'>>) => {
+    const targets = s.done ? [s] : sets.filter((x) => x.order >= s.order && !x.done && x.type === s.type)
+    await db.transaction('rw', db.sets, async () => {
+      for (const t of targets) await db.sets.update(t.id, patch)
+    })
+  }
+
+  const workDone = sets.some((x) => x.done && x.type !== 'rozgrzewka')
+  const undoneWork = sets.filter((x) => !x.done && x.type === 'robocza')
+  const showSuggestion =
+    live &&
+    !workDone &&
+    suggestion !== null &&
+    hiddenTip !== cur?.exerciseId &&
+    undoneWork.some((x) => x.weightKg !== suggestion.weightKg || x.reps !== suggestion.reps)
+  const firstTime = live && prev !== undefined && prev.length === 0 && !workDone && undoneWork.every((x) => x.weightKg === 0)
+
+  const applySuggestion = async () => {
+    if (!suggestion) return
+    await db.transaction('rw', db.sets, async () => {
+      for (const t of undoneWork) await db.sets.update(t.id, { weightKg: suggestion.weightKg, reps: suggestion.reps })
+    })
+  }
 
   const complete = async (s: WorkoutSet) => {
     unlockAudio()
@@ -121,7 +153,7 @@ export function Workout({ id }: { id: number }) {
       ) : (
         <>
           {/* Nagłówek ćwiczenia */}
-          <div className="flex items-start gap-3 px-5 pb-4 pt-2">
+          <div className="flex items-start gap-3 px-5 pb-3 pt-2">
             <button
               onClick={() => setSheet('menu')}
               className="flex min-w-0 flex-1 flex-col items-start gap-1 border-0 bg-transparent p-0 text-left"
@@ -136,6 +168,32 @@ export function Workout({ id }: { id: number }) {
               <ListBulletIcon />
             </RoundButton>
           </div>
+
+          <TipsToggle key={cur.exerciseId} exercise={exercise} />
+
+          {showSuggestion && suggestion && (
+            <div className="mx-5 mb-3 flex flex-col gap-2 rounded-[20px] border-2 border-solid border-accent bg-card px-4 py-3.5">
+              <span className="text-xs font-bold tracking-wide text-accent">
+                {suggestion.kind === 'ciężar' ? 'CZAS NA PROGRES' : 'CEL NA DZIŚ'}
+              </span>
+              <span className="text-[17px] font-extrabold leading-snug">{suggestion.title}</span>
+              <span className="text-[13px] leading-snug text-muted">{suggestion.reason}</span>
+              <div className="mt-1 flex gap-2">
+                <Button onClick={applySuggestion} className="flex-1">
+                  Zastosuj do serii
+                </Button>
+                <Button variant="ghost" onClick={() => setHiddenTip(cur.exerciseId)}>
+                  Nie teraz
+                </Button>
+              </div>
+            </div>
+          )}
+          {firstTime && (
+            <p className="mx-5 mb-3 mt-0 rounded-2xl bg-soft px-4 py-3 text-[13px] leading-snug text-ink">
+              Pierwszy raz to ćwiczenie: wpisz ciężar w pierwszej serii — kolejne serie przejmą go automatycznie. Od następnego
+              treningu wszystko podpowie się samo.
+            </p>
+          )}
 
           {/* Serie */}
           <Card className="mx-5 flex flex-col gap-2 p-3.5">
@@ -153,6 +211,7 @@ export function Workout({ id }: { id: number }) {
                     editing={s.done}
                     exercise={exercise}
                     onComplete={() => complete(s)}
+                    onChange={(patch) => updateForward(s, patch)}
                     onUndo={async () => {
                       await db.sets.update(s.id, { done: false })
                       setEditingSet(null)
@@ -359,6 +418,7 @@ function ActiveSet({
   onUndo,
   onDelete,
   onCancel,
+  onChange,
 }: {
   set: WorkoutSet
   number: number
@@ -370,6 +430,7 @@ function ActiveSet({
   onUndo: () => void
   onDelete: () => void
   onCancel?: () => void
+  onChange: (patch: Partial<Pick<WorkoutSet, 'weightKg' | 'reps'>>) => void
 }) {
   // Hantle zwykle rosną co 1–2 kg, sztanga i maszyny co 2,5 kg.
   const step = exercise?.equipment === 'hantle' ? 1 : 2.5
@@ -389,8 +450,8 @@ function ActiveSet({
         </span>
       </div>
       <div className="grid gap-2" style={{ gridTemplateColumns: 'minmax(0, 1.3fr) minmax(0, 1fr)' }}>
-        <Stepper label="Ciężar" value={set.weightKg} step={step} decimal suffix="kg" onChange={(v) => db.sets.update(set.id, { weightKg: v })} />
-        <Stepper label="Powtórzenia" value={set.reps} step={1} suffix="×" onChange={(v) => db.sets.update(set.id, { reps: Math.round(v) })} />
+        <Stepper label="Ciężar" value={set.weightKg} step={step} decimal suffix="kg" onChange={(v) => onChange({ weightKg: v })} />
+        <Stepper label="Powtórzenia" value={set.reps} step={1} suffix="×" onChange={(v) => onChange({ reps: Math.round(v) })} />
       </div>
       {editing ? (
         <div className="grid grid-cols-2 gap-2">
