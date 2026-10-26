@@ -206,7 +206,7 @@ export function Workout({ id }: { id: number }) {
                     key={s.id}
                     set={s}
                     number={sets.filter((x, k) => k <= n && x.type !== 'rozgrzewka').length}
-                    prevLabel={p ? setLabel(p.weightKg, p.reps) : undefined}
+                    prevLabel={p ? setLabel(p.weightKg, p.reps, p.durationSec) : undefined}
                     repsHint={cur.repsMin ? `${cur.repsMin}–${cur.repsMax}` : undefined}
                     editing={s.done}
                     exercise={exercise}
@@ -247,7 +247,7 @@ export function Workout({ id }: { id: number }) {
                   ) : s.type === 'drop' ? (
                     <span className="text-xs text-muted">drop set</span>
                   ) : p ? (
-                    <span className="text-xs text-muted">było {setLabel(p.weightKg, p.reps)}</span>
+                    <span className="text-xs text-muted">było {setLabel(p.weightKg, p.reps, p.durationSec)}</span>
                   ) : null}
                 </button>
               )

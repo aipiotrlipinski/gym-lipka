@@ -18,6 +18,7 @@ React + TypeScript + Vite, Tailwind CSS, Dexie (IndexedDB), vite-plugin-pwa. Pub
 npm install
 npm run dev      # podgląd lokalny
 npm run build    # wersja produkcyjna w dist/
+npm test         # testy (m.in. import z GymRun)
 ```
 
 ## Etapy
@@ -26,5 +27,5 @@ npm run build    # wersja produkcyjna w dist/
 - [x] Etap 1 — baza ćwiczeń i plany
 - [x] Etap 2 — trening na żywo, timer przerwy
 - [x] Etap 3 — historia, wykresy, rekordy
-- [ ] Etap 4 — kopia zapasowa, CSV, import z GymRun
+- [ ] Etap 4 — kopia zapasowa, CSV, import z GymRun (import z GymRun gotowy: Ustawienia → Import)
 - [ ] Etap 5 — aplikacja APK

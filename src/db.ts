@@ -55,6 +55,8 @@ export interface Workout {
   endedAt?: number
   status: 'trwa' | 'zakończony'
   note?: string
+  /** Skąd pochodzi trening, gdy nie był zapisany w aplikacji (np. import z GymRun). */
+  source?: 'gymrun'
   items: WorkoutItem[]
 }
 
@@ -66,6 +68,8 @@ export interface WorkoutSet {
   type: SetType
   weightKg: number
   reps: number
+  /** Seria na czas (np. deska) — liczba sekund zamiast powtórzeń. */
+  durationSec?: number
   done: boolean
 }
 

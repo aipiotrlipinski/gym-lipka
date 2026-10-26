@@ -43,7 +43,8 @@ async function initialSets(workoutId: number, exerciseId: number, workingSets: n
       order: rows.length,
       type: src?.type === 'drop' ? 'drop' : 'robocza',
       weightKg: src?.weightKg ?? 0,
-      reps: src?.reps ?? repsMin,
+      // Serie na czas (np. deska z importu) nie mają powtórzeń — wtedy start z dolnej granicy zakresu.
+      reps: src?.reps || repsMin,
       done: false,
     })
   }

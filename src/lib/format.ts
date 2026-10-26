@@ -5,8 +5,9 @@ export function kg(n: number) {
   return Number.isInteger(n) ? String(n) : n.toFixed(2).replace(/0+$/, '').replace('.', ',')
 }
 
-/** Seria jako tekst: "80 × 8", przy masie ciała bez obciążenia "MC × 8". */
-export function setLabel(weightKg: number, reps: number) {
+/** Seria jako tekst: "80 × 8", przy masie ciała bez obciążenia "MC × 8", seria na czas "60 s" (z obciążeniem "10 × 60 s"). */
+export function setLabel(weightKg: number, reps: number, durationSec?: number) {
+  if (durationSec) return weightKg > 0 ? `${kg(weightKg)} × ${durationSec} s` : `${durationSec} s`
   return `${weightKg === 0 ? 'MC' : kg(weightKg)} × ${reps}`
 }
 

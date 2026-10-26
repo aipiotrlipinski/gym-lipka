@@ -136,7 +136,7 @@ export function ExerciseDetail({ id }: { id: number }) {
                 <span className="text-[15px] font-bold tabular-nums text-ink">
                   {p.sets
                     .filter((s) => s.done && s.type !== 'rozgrzewka')
-                    .map((s) => setLabel(s.weightKg, s.reps))
+                    .map((s) => setLabel(s.weightKg, s.reps, s.durationSec))
                     .join('  ·  ')}
                 </span>
               </button>
