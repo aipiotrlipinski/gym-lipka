@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { nextPlanDay, startWorkout } from './lib/workout'
 import { TabBar, type Tab } from './components/TabBar'
 import { back, navigate, useRoute, type Route } from './router'
 import { useTheme } from './theme'
@@ -10,6 +11,26 @@ import { ExerciseDetail } from './screens/ExerciseDetail'
 import { Workout } from './screens/Workout'
 import { Session } from './screens/Session'
 import { Settings } from './screens/Settings'
+
+/** Skrót „Zacznij trening” z ikony: od razu otwiera trening (trwający albo następny z planu). */
+let quickStarting: Promise<number> | null = null
+function QuickStart() {
+  useEffect(() => {
+    let alive = true
+    // Jedno uruchomienie naraz — żeby podwójne wywołanie nie założyło dwóch treningów.
+    quickStarting ??= nextPlanDay()
+      .then((d) => startWorkout(d?.id))
+      .finally(() => (quickStarting = null))
+    ;(async () => {
+      const id = await quickStarting!
+      if (alive) navigate({ name: 'trening', id }, true)
+    })()
+    return () => {
+      alive = false
+    }
+  }, [])
+  return <p className="px-5 pt-10 text-center text-sm text-muted">Otwieram trening…</p>
+}
 
 /** Która zakładka jest podświetlona dla danego ekranu; null = ekran bez dolnego paska. */
 function tabOf(r: Route): Tab | null {
@@ -56,6 +77,8 @@ function Screen({ route }: { route: Route }) {
       return <Session id={route.id} />
     case 'ustawienia':
       return <Settings mode={mode} setMode={setMode} onClose={() => back({ name: 'start' })} />
+    case 'szybki-start':
+      return <QuickStart />
   }
 }
 

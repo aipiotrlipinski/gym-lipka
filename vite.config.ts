@@ -7,7 +7,7 @@ import { VitePWA } from 'vite-plugin-pwa'
 export default defineConfig({
   base: '/gym-lipka/',
   define: {
-    __APP_VERSION__: JSON.stringify(`0.3.0 (${new Date().toISOString().slice(0, 10)})`),
+    __APP_VERSION__: JSON.stringify(`0.4.0 (${new Date().toISOString().slice(0, 10)})`),
   },
   plugins: [
     react(),
@@ -31,9 +31,30 @@ export default defineConfig({
           { src: 'pwa-512.png', sizes: '512x512', type: 'image/png' },
           { src: 'pwa-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
         ],
+        // Przytrzymaj ikonę aplikacji na ekranie głównym → te skróty. Każdy można przeciągnąć na pulpit jako osobną ikonę.
+        shortcuts: [
+          {
+            name: 'Zacznij trening',
+            short_name: 'Trening',
+            description: 'Wznów trwający albo zacznij następny dzień planu',
+            url: '/gym-lipka/#/szybki-start',
+            icons: [{ src: 'shortcut-start.png', sizes: '96x96', type: 'image/png' }],
+          },
+          {
+            name: 'Historia',
+            url: '/gym-lipka/#/historia',
+            icons: [{ src: 'shortcut-historia.png', sizes: '96x96', type: 'image/png' }],
+          },
+          {
+            name: 'Ćwiczenia',
+            url: '/gym-lipka/#/cwiczenia',
+            icons: [{ src: 'shortcut-cwiczenia.png', sizes: '96x96', type: 'image/png' }],
+          },
+        ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,png,svg,woff2}'],
+        globPatterns: ['**/*.{js,css,html,png,svg,woff2,webp}'],
+        maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
       },
     }),
   ],

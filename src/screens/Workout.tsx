@@ -20,6 +20,8 @@ import { Badge, Button, Card, Confirm, Empty, RoundButton, Sheet, Stepper, TextF
 import { BackIcon, CheckIcon, ListBulletIcon } from '../components/icons'
 import { ExercisePicker, useExercises } from '../components/exercises'
 import { TipsToggle } from '../components/Tips'
+import { ExerciseThumb, PhotoSheet } from '../components/ExercisePhoto'
+import { exerciseImage } from '../lib/exerciseImage'
 
 const TYPE_SHORT = { rozgrzewka: 'R', robocza: '', drop: 'D' } as const
 const TYPE_LABEL = { rozgrzewka: 'Rozgrzewkowa', robocza: 'Robocza', drop: 'Drop set' } as const
@@ -35,7 +37,7 @@ export function Workout({ id }: { id: number }) {
 
   const [idx, setIdx] = useState<number | null>(null)
   const [editingSet, setEditingSet] = useState<number | null>(null)
-  const [sheet, setSheet] = useState<null | 'list' | 'add' | 'menu' | 'swap' | 'finish' | 'discard'>(null)
+  const [sheet, setSheet] = useState<null | 'list' | 'add' | 'menu' | 'swap' | 'finish' | 'discard' | 'photo'>(null)
   const [swapPermanent, setSwapPermanent] = useState(false)
 
   const items = workout?.items ?? []
@@ -154,6 +156,15 @@ export function Workout({ id }: { id: number }) {
         <>
           {/* Nagłówek ćwiczenia */}
           <div className="flex items-start gap-3 px-5 pb-3 pt-2">
+            {exerciseImage(exercise) && (
+              <button
+                onClick={() => setSheet('photo')}
+                aria-label="Pokaż zdjęcie ćwiczenia"
+                className="mt-1 shrink-0 border-0 bg-transparent p-0"
+              >
+                <ExerciseThumb exercise={exercise} size="lg" />
+              </button>
+            )}
             <button
               onClick={() => setSheet('menu')}
               className="flex min-w-0 flex-1 flex-col items-start gap-1 border-0 bg-transparent p-0 text-left"
@@ -304,6 +315,7 @@ export function Workout({ id }: { id: number }) {
       )}
 
       {/* Arkusze */}
+      {sheet === 'photo' && exercise && <PhotoSheet exercise={exercise} onClose={() => setSheet(null)} />}
       {sheet === 'list' && (
         <Sheet title="Ćwiczenia w treningu" onClose={() => setSheet(null)}>
           <div className="flex flex-col gap-2 px-5 pb-2">
@@ -322,8 +334,11 @@ export function Workout({ id }: { id: number }) {
                     j === i ? 'border-2 border-solid border-accent' : 'border border-solid border-line'
                   }`}
                 >
-                  <span className="text-[15px] font-bold text-ink">
-                    {j + 1}. {name(it.exerciseId)}
+                  <span className="flex min-w-0 items-center gap-3">
+                    <ExerciseThumb exercise={exercises.find((e) => e.id === it.exerciseId)} size="sm" />
+                    <span className="text-[15px] font-bold text-ink">
+                      {j + 1}. {name(it.exerciseId)}
+                    </span>
                   </span>
                   <span className={`shrink-0 text-xs font-bold ${d === ss.length && d > 0 ? 'text-accent' : 'text-muted'}`}>
                     {d}/{ss.length}

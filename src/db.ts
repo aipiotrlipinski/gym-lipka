@@ -13,6 +13,8 @@ export interface Exercise {
   equipment: Equipment
   custom: boolean
   note?: string
+  /** Zdjęcie z biblioteki (slug) — dla własnych ćwiczeń; wbudowane mają zdjęcie po nazwie. */
+  image?: string
 }
 
 export interface Plan {

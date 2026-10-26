@@ -3,6 +3,8 @@ import { useMemo, useState } from 'react'
 import { db, type Equipment, type Exercise, type MuscleGroup } from '../db'
 import { Button, Sheet, TextField } from './ui'
 import { SearchIcon } from './icons'
+import { ExerciseThumb, ImagePickerSheet } from './ExercisePhoto'
+import { thumbUrl } from '../lib/exerciseImage'
 
 export const MUSCLES: { id: MuscleGroup; label: string }[] = [
   { id: 'klatka', label: 'Klatka' },
@@ -117,12 +119,15 @@ export function ExercisePicker({
               onPick(e)
               onClose()
             }}
-            className="flex flex-col items-start gap-0.5 border-0 border-b border-solid border-line bg-transparent py-3 text-left"
+            className="flex items-center gap-3 border-0 border-b border-solid border-line bg-transparent py-2.5 text-left"
           >
-            <span className="text-[15px] font-bold text-ink">{e.name}</span>
-            <span className="text-xs text-muted">
-              {muscleLabel(e.muscle)} · {equipmentLabel(e.equipment)}
-              {e.custom ? ' · własne' : ''}
+            <ExerciseThumb exercise={e} />
+            <span className="flex min-w-0 flex-col gap-0.5">
+              <span className="text-[15px] font-bold text-ink">{e.name}</span>
+              <span className="text-xs text-muted">
+                {muscleLabel(e.muscle)} · {equipmentLabel(e.equipment)}
+                {e.custom ? ' · własne' : ''}
+              </span>
             </span>
           </button>
         ))}
@@ -151,13 +156,15 @@ export function NewExerciseSheet({
   const [muscle, setMuscle] = useState<MuscleGroup>(existing?.muscle ?? 'inne')
   const [equipment, setEquipment] = useState<Equipment>(existing?.equipment ?? 'inne')
   const [note, setNote] = useState(existing?.note ?? '')
+  const [image, setImage] = useState<string | undefined>(existing?.image)
+  const [pickingImage, setPickingImage] = useState(false)
   const chip = (active: boolean) =>
     `h-9 rounded-full px-3 text-[13px] ${
       active ? 'border-transparent bg-accent font-extrabold text-on-accent' : 'border border-line bg-card font-bold text-ink'
     }`
 
   const save = async () => {
-    const data = { name: name.trim(), muscle, equipment, note: note.trim() || undefined, custom: true }
+    const data = { name: name.trim(), muscle, equipment, note: note.trim() || undefined, image, custom: true }
     if (!data.name) return
     if (existing) {
       await db.exercises.update(existing.id, data)
@@ -193,11 +200,35 @@ export function NewExerciseSheet({
             ))}
           </div>
         </div>
+        <div className="flex flex-col gap-1.5">
+          <span className="text-[13px] font-bold text-muted">Zdjęcie (opcjonalnie)</span>
+          <button
+            onClick={() => setPickingImage(true)}
+            className="flex items-center gap-3 rounded-2xl border border-solid border-line bg-card p-2 text-left"
+          >
+            {image ? (
+              <img src={thumbUrl(image)} alt="" className="h-[42px] w-14 rounded-xl object-cover" />
+            ) : (
+              <span className="flex h-[42px] w-14 items-center justify-center rounded-xl bg-soft text-lg text-muted">+</span>
+            )}
+            <span className="text-sm font-bold text-ink">{image ? 'Zmień zdjęcie' : 'Wybierz podobne ćwiczenie z biblioteki'}</span>
+          </button>
+        </div>
         <TextField label="Notatka (opcjonalnie)" value={note} onChange={setNote} placeholder="np. ustawienie siedziska: 4" />
         <Button size="lg" disabled={!name.trim()} onClick={save}>
           Zapisz
         </Button>
       </div>
+      {pickingImage && (
+        <ImagePickerSheet
+          current={image}
+          onPick={(s) => {
+            setImage(s)
+            setPickingImage(false)
+          }}
+          onClose={() => setPickingImage(false)}
+        />
+      )}
     </Sheet>
   )
 }

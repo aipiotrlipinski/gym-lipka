@@ -16,6 +16,8 @@ export type Route =
   | { name: 'podsumowanie'; id: number }
   | { name: 'sesja'; id: number }
   | { name: 'ustawienia' }
+  /** Skrót z ikony aplikacji: wznawia trwający trening albo zaczyna następny dzień planu. */
+  | { name: 'szybki-start' }
 
 export function parse(hash: string): Route {
   const [a, b] = hash.replace(/^#\/?/, '').split('/')
@@ -25,6 +27,7 @@ export function parse(hash: string): Route {
     case 'historia':
     case 'cwiczenia':
     case 'ustawienia':
+    case 'szybki-start':
       return { name: a }
     case 'plan':
     case 'dzien':

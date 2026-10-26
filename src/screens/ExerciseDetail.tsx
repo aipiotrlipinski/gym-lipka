@@ -7,6 +7,7 @@ import { exerciseHistory } from '../lib/stats'
 import { Button, Card, Confirm, Empty, SectionLabel, TopBar } from '../components/ui'
 import { LineChart } from '../components/LineChart'
 import { TipsCard } from '../components/Tips'
+import { ExercisePhoto } from '../components/ExercisePhoto'
 import { NewExerciseSheet, equipmentLabel, muscleLabel } from '../components/exercises'
 
 type Metric = 'e1rm' | 'maxWeight' | 'volume'
@@ -61,6 +62,9 @@ export function ExerciseDetail({ id }: { id: number }) {
         {muscleLabel(exercise.muscle)} · {equipmentLabel(exercise.equipment)}
       </TopBar>
       <h1 className="m-0 px-5 pb-3 pt-2 text-[26px] font-extrabold leading-tight tracking-tight">{exercise.name}</h1>
+      <div className="px-5 pb-3">
+        <ExercisePhoto exercise={exercise} />
+      </div>
       {exercise.note && <p className="mx-5 mb-3 mt-0 text-sm text-muted">Notatka: {exercise.note}</p>}
       <TipsCard exercise={exercise} />
       <div className="h-3" />

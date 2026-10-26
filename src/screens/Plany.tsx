@@ -6,6 +6,7 @@ import { nextPlanDay, startWorkout } from '../lib/workout'
 import { Badge, Button, Card, Confirm, Empty, RoundButton, ScreenTitle, SectionLabel, Stepper, SavedTextField, TopBar } from '../components/ui'
 import { ChevronIcon, DownIcon, TrashIcon, UpIcon } from '../components/icons'
 import { ExercisePicker, useExercises } from '../components/exercises'
+import { ExerciseThumb } from '../components/ExercisePhoto'
 import { clock } from '../lib/format'
 
 function usePlans() {
@@ -246,7 +247,8 @@ export function DayEdit({ id }: { id: number }) {
           return (
             <Card key={`${e.exerciseId}-${i}`} className="flex flex-col gap-3 p-4">
               <div className="flex items-start gap-2">
-                <span className="min-w-0 flex-1 pt-2 text-[15px] font-extrabold">
+                <ExerciseThumb exercise={ex} size="sm" />
+                <span className="min-w-0 flex-1 pt-1.5 text-[15px] font-extrabold">
                   {i + 1}. {ex?.name ?? '?'}
                 </span>
                 <RoundButton label="W górę" onClick={() => move(i, -1)}>

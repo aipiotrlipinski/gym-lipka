@@ -3,6 +3,7 @@ import type { MuscleGroup } from '../db'
 import { navigate } from '../router'
 import { Badge, Button, ScreenTitle } from '../components/ui'
 import { ChevronIcon } from '../components/icons'
+import { ExerciseThumb } from '../components/ExercisePhoto'
 import {
   MuscleChips,
   NewExerciseSheet,
@@ -48,11 +49,12 @@ export function Cwiczenia() {
               <button
                 key={e.id}
                 onClick={() => navigate({ name: 'cwiczenie', id: e.id })}
-                className={`flex w-full items-center justify-between gap-3 border-0 bg-transparent px-4 py-3.5 text-left ${
+                className={`flex w-full items-center justify-between gap-3 border-0 bg-transparent py-2.5 pl-2.5 pr-4 text-left ${
                   i < items.length - 1 ? 'border-b border-solid border-line' : ''
                 }`}
               >
-                <div className="flex min-w-0 flex-col gap-0.5">
+                <ExerciseThumb exercise={e} />
+                <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                   <span className="text-[15px] font-bold text-ink">{e.name}</span>
                   <span className="text-xs text-muted">{equipmentLabel(e.equipment)}</span>
                 </div>
