@@ -23,6 +23,7 @@ import { TipsToggle } from '../components/Tips'
 import { ExerciseThumb, PhotoSheet } from '../components/ExercisePhoto'
 import { exerciseImage } from '../lib/exerciseImage'
 import { syncWorkoutToHealth } from '../lib/health'
+import { SET_DONE_EVENT, setFocusExercise } from '../lib/lockscreen'
 
 const TYPE_SHORT = { rozgrzewka: 'R', robocza: '', drop: 'D' } as const
 const TYPE_LABEL = { rozgrzewka: 'Rozgrzewkowa', robocza: 'Robocza', drop: 'Drop set' } as const
@@ -51,6 +52,28 @@ export function Workout({ id }: { id: number }) {
   }, [idx, workout, allSets])
 
   const cur = items[Math.min(idx ?? 0, Math.max(0, items.length - 1))]
+
+  // Ekran blokady pokazuje ćwiczenie otwarte tutaj.
+  useEffect(() => {
+    if (live) setFocusExercise(cur?.exerciseId)
+    return () => setFocusExercise(undefined)
+  }, [live, cur?.exerciseId])
+
+  // Ostatnia seria zaliczona z ekranu blokady → przejście do następnego niedokończonego ćwiczenia.
+  const [doneOutside, setDoneOutside] = useState<number | null>(null)
+  useEffect(() => {
+    const on = (e: Event) => setDoneOutside((e as CustomEvent<{ exerciseId: number }>).detail.exerciseId)
+    window.addEventListener(SET_DONE_EVENT, on)
+    return () => window.removeEventListener(SET_DONE_EVENT, on)
+  }, [])
+  useEffect(() => {
+    if (doneOutside === null || !workout || !allSets) return
+    setDoneOutside(null)
+    if (doneOutside !== cur?.exerciseId || allSets.some((s) => s.exerciseId === doneOutside && !s.done)) return
+    const at = workout.items.findIndex((it) => it.exerciseId === doneOutside)
+    const nxt = workout.items.findIndex((it, j) => j > at && allSets.some((x) => x.exerciseId === it.exerciseId && !x.done))
+    if (nxt >= 0) setIdx(nxt)
+  }, [doneOutside, workout, allSets, cur?.exerciseId])
   const exercise = exercises.find((e) => e.id === cur?.exerciseId)
   const sets = useMemo(() => (allSets ?? []).filter((s) => s.exerciseId === cur?.exerciseId), [allSets, cur?.exerciseId])
 

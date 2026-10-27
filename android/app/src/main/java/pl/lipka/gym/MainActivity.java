@@ -8,6 +8,8 @@ public class MainActivity extends BridgeActivity {
     public void onCreate(Bundle savedInstanceState) {
         // Własny moduł Health Connect (kroki z Google Fit, zapis treningu) — musi być zarejestrowany przed super.onCreate.
         registerPlugin(HealthPlugin.class);
+        // Powiadomienie treningowe na ekranie blokady.
+        registerPlugin(WorkoutPlugin.class);
         super.onCreate(savedInstanceState);
     }
 }

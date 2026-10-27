@@ -46,6 +46,16 @@
             </intent-filter>
         </activity-alias>
 
+        <!-- Powiadomienie treningowe na ekranie blokady (seria, przerwa, przyciski) -->
+        <service
+            android:name=".WorkoutService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Trwający trening siłowy: bieżąca seria, timer przerwy i przyciski na ekranie blokady" />
+        </service>
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"
@@ -60,6 +70,12 @@
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- Powiadomienie treningowe na ekranie blokady -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.VIBRATE" />
 
     <!-- Health Connect: kroki (z Google Fit / telefonu) i zapis treningu siłowego z kaloriami -->
     <uses-permission android:name="android.permission.health.READ_STEPS" />

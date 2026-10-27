@@ -1,4 +1,5 @@
 import { useEffect, useState, useSyncExternalStore } from 'react'
+import { Capacitor } from '@capacitor/core'
 
 /**
  * Timer przerwy. Trzymamy czas końca (a nie odliczanie), więc timer jest dokładny
@@ -72,6 +73,8 @@ function scheduleAlarm() {
   const left = state.endAt - Date.now()
   if (left <= 0) return
   alarmTimer = window.setTimeout(() => {
+    // W APK przy zgaszonym ekranie sygnał daje powiadomienie treningowe — bez podwójnego alarmu.
+    if (Capacitor.isNativePlatform() && document.visibilityState === 'hidden') return
     beep()
     navigator.vibrate?.([350, 150, 350])
   }, left)
@@ -100,6 +103,12 @@ function subscribe(l: () => void) {
   listeners.add(l)
   return () => listeners.delete(l)
 }
+
+/** Stan przerwy bez Reacta (dla powiadomienia na ekranie blokady). */
+export function restSnapshot() {
+  return state
+}
+export const onRestChange = subscribe
 
 /** Aktualny stan przerwy z odświeżaniem co ćwierć sekundy. */
 export function useRest() {
