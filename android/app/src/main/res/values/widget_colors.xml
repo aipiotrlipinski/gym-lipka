@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Kolory widgetu: motyw jasny (Kreda, zielony akcent) -->
+<resources>
+    <color name="widget_bg">#FFFFFF</color>
+    <color name="widget_ink">#1A1A1A</color>
+    <color name="widget_muted">#5C5A55</color>
+    <color name="widget_accent">#1F7A4D</color>
+</resources>
