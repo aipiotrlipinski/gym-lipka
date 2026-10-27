@@ -12,6 +12,9 @@ import android.os.Build
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
+import android.os.SystemClock
+import android.view.View
+import android.widget.RemoteViews
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
@@ -178,30 +181,48 @@ class WorkoutService : Service() {
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
 
+    /** Widok z przyciskami — ten sam w wersji zwiniętej i rozwiniętej, więc przyciski są zawsze pod ręką. */
+    private fun views(state: WorkoutState, resting: Boolean): RemoteViews {
+        val v = RemoteViews(packageName, R.layout.notif_workout)
+        v.setTextViewText(R.id.n_title, state.title)
+        if (resting) {
+            v.setViewVisibility(R.id.n_rest_label, View.VISIBLE)
+            v.setViewVisibility(R.id.n_rest, View.VISIBLE)
+            v.setChronometer(R.id.n_rest, SystemClock.elapsedRealtime() + (state.restEndAt - System.currentTimeMillis()), null, true)
+            v.setChronometerCountDown(R.id.n_rest, true)
+            v.setTextViewText(R.id.n_text, "  · potem ${state.text.substringBefore(" · ")}")
+        } else {
+            v.setViewVisibility(R.id.n_rest_label, View.GONE)
+            v.setViewVisibility(R.id.n_rest, View.GONE)
+            v.setTextViewText(R.id.n_text, state.text)
+        }
+        v.setViewVisibility(R.id.n_start, if (state.canStart && resting) View.VISIBLE else View.GONE)
+        v.setViewVisibility(R.id.n_done, if (state.canDone) View.VISIBLE else View.GONE)
+        v.setOnClickPendingIntent(R.id.n_start, action(ACTION_START, 1))
+        v.setOnClickPendingIntent(R.id.n_done, action(ACTION_DONE, 2))
+        return v
+    }
+
     private fun build(state: WorkoutState): Notification {
         val resting = state.restEndAt > System.currentTimeMillis()
+        val content = views(state, resting)
         val b = NotificationCompat.Builder(this, CHANNEL)
             .setSmallIcon(R.drawable.ic_stat_gym)
             .setColor(0xFF1F7A4D.toInt())
+            // Tytuł i tekst zostają dla czytników ekranu, zegarków i widoku „ukryj treść”.
             .setContentTitle(state.title)
             .setContentText(if (resting) "Przerwa · potem ${state.text}" else state.text)
-            .setStyle(NotificationCompat.BigTextStyle().bigText(if (resting) "Przerwa\nPotem: ${state.text}" else state.text))
+            .setStyle(NotificationCompat.DecoratedCustomViewStyle())
+            .setCustomContentView(content)
+            .setCustomBigContentView(content)
+            .setCustomHeadsUpContentView(content)
             .setOngoing(true)
             .setOnlyAlertOnce(true)
+            .setShowWhen(false)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setCategory(NotificationCompat.CATEGORY_PROGRESS)
             .setContentIntent(openApp())
             .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
-        if (resting) {
-            // Odliczanie robi sam system — działa na ekranie blokady bez budzenia aplikacji.
-            b.setWhen(state.restEndAt).setShowWhen(true).setUsesChronometer(true).setChronometerCountDown(true)
-        } else {
-            b.setShowWhen(false)
-        }
-        // Android 16+: „Live Update” — powiadomienie wyróżnione na ekranie blokady i jako chip na pasku stanu.
-        b.extras.putBoolean("android.requestPromotedOngoing", true)
-        if (state.canStart && resting) b.addAction(0, "Zaczynam serię", action(ACTION_START, 1))
-        if (state.canDone) b.addAction(0, "Seria zrobiona", action(ACTION_DONE, 2))
         return b.build()
     }
 }
