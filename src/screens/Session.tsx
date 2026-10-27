@@ -4,6 +4,7 @@ import { db } from '../db'
 import { navigate } from '../router'
 import { duration, kg, longDate, setLabel, thousands, volume } from '../lib/format'
 import { workoutPRs } from '../lib/stats'
+import { weightAt, workoutKcal } from '../lib/kcal'
 import { deleteWorkout, setsOf } from '../lib/workout'
 import { Badge, Button, Card, Confirm, Empty, SectionLabel, TopBar } from '../components/ui'
 import { useExercises } from '../components/exercises'
@@ -15,6 +16,7 @@ export function Session({ id, fresh = false }: { id: number; fresh?: boolean }) 
   const workout = useLiveQuery(() => db.workouts.get(id), [id])
   const sets = useLiveQuery(() => setsOf(id), [id])
   const prs = useLiveQuery(() => workoutPRs(id), [id, sets?.length])
+  const body = useLiveQuery(() => db.body.toArray(), [])
   const exercises = useExercises()
   const [confirmDelete, setConfirmDelete] = useState(false)
 
@@ -24,10 +26,12 @@ export function Session({ id, fresh = false }: { id: number; fresh?: boolean }) 
   const done = sets.filter((s) => s.done)
   const name = (eid: number) => exercises.find((e) => e.id === eid)?.name ?? '?'
   const time = (workout.endedAt ?? Date.now()) - workout.startedAt
+  const kcal = workout.endedAt ? workoutKcal(time, weightAt(body ?? [], workout.startedAt)) : undefined
   const stats = [
     { label: 'Czas', value: duration(time) },
     { label: 'Objętość', value: `${thousands(volume(sets))} kg` },
     { label: 'Serie', value: String(done.filter((s) => s.type !== 'rozgrzewka').length) },
+    { label: 'Kalorie (szacunek)', value: kcal !== undefined ? `~${thousands(kcal)} kcal` : '—' },
   ]
 
   return (
@@ -47,7 +51,7 @@ export function Session({ id, fresh = false }: { id: number; fresh?: boolean }) 
         </>
       )}
 
-      <div className="mx-5 mt-4 grid grid-cols-3 gap-2">
+      <div className="mx-5 mt-4 grid grid-cols-2 gap-2">
         {stats.map((s) => (
           <Card key={s.label} className="flex flex-col gap-1 !rounded-[18px] p-3">
             <span className="text-[11px] text-muted">{s.label}</span>
@@ -55,6 +59,14 @@ export function Session({ id, fresh = false }: { id: number; fresh?: boolean }) 
           </Card>
         ))}
       </div>
+      {kcal === undefined && workout.endedAt && body && body.length === 0 && (
+        <button
+          onClick={() => navigate({ name: 'historia' })}
+          className="mx-5 mt-2 w-[calc(100%-2.5rem)] rounded-2xl border-0 bg-soft px-4 py-3 text-left text-[13px] text-muted"
+        >
+          Żeby policzyć kalorie, wpisz masę ciała w Historii → Masa ciała.
+        </button>
+      )}
 
       {prs && prs.length > 0 && (
         <>
