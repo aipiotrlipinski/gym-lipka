@@ -249,7 +249,8 @@ class WorkoutService : Service() {
             .setCategory(Notification.CATEGORY_PROGRESS)
             .setContentIntent(openApp())
             .setForegroundServiceBehavior(Notification.FOREGROUND_SERVICE_IMMEDIATE)
-            .setRequestPromotedOngoing(true)
+            // = setRequestPromotedOngoing(true); metoda jest dopiero w nowszym SDK niż nasz, klucz działa tak samo.
+            .addExtras(android.os.Bundle().apply { putBoolean("android.requestPromotedOngoing", true) })
         if (resting) {
             // Odliczanie przerwy liczy system — widać je w Now Bar i na chipie bez budzenia aplikacji.
             b.setWhen(state.restEndAt).setShowWhen(true).setUsesChronometer(true).setChronometerCountDown(true)
