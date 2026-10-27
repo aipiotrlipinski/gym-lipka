@@ -8,6 +8,7 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
+import android.graphics.drawable.Icon
 import android.os.Build
 import android.os.Handler
 import android.os.IBinder
@@ -30,6 +31,8 @@ data class WorkoutState(
     val restEndAt: Long,
     val canStart: Boolean,
     val canDone: Boolean,
+    val setsDone: Int = 0,
+    val setsTotal: Int = 0,
 )
 
 /**
@@ -204,6 +207,11 @@ class WorkoutService : Service() {
     }
 
     private fun build(state: WorkoutState): Notification {
+        // Android 16+ (One UI 8): „Live Update” — Now Bar na ekranie blokady i chip na pasku stanu.
+        // Wymaga standardowego wyglądu (bez własnego widoku), więc to osobna ścieżka.
+        if (Build.VERSION.SDK_INT >= 36 && getSystemService(NotificationManager::class.java).canPostPromotedNotifications()) {
+            return buildLive(state)
+        }
         val resting = state.restEndAt > System.currentTimeMillis()
         val content = views(state, resting)
         val b = NotificationCompat.Builder(this, CHANNEL)
@@ -223,6 +231,47 @@ class WorkoutService : Service() {
             .setCategory(NotificationCompat.CATEGORY_PROGRESS)
             .setContentIntent(openApp())
             .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
+        return b.build()
+    }
+
+    @androidx.annotation.RequiresApi(36)
+    private fun buildLive(state: WorkoutState): Notification {
+        val resting = state.restEndAt > System.currentTimeMillis()
+        val accent = 0xFF1F7A4D.toInt()
+        val b = Notification.Builder(this, CHANNEL)
+            .setSmallIcon(R.drawable.ic_stat_gym)
+            .setColor(accent)
+            .setContentTitle(state.title)
+            .setContentText(if (resting) "Przerwa · potem ${state.text}" else state.text)
+            .setOngoing(true)
+            .setOnlyAlertOnce(true)
+            .setVisibility(Notification.VISIBILITY_PUBLIC)
+            .setCategory(Notification.CATEGORY_PROGRESS)
+            .setContentIntent(openApp())
+            .setForegroundServiceBehavior(Notification.FOREGROUND_SERVICE_IMMEDIATE)
+            .setRequestPromotedOngoing(true)
+        if (resting) {
+            // Odliczanie przerwy liczy system — widać je w Now Bar i na chipie bez budzenia aplikacji.
+            b.setWhen(state.restEndAt).setShowWhen(true).setUsesChronometer(true).setChronometerCountDown(true)
+        } else {
+            b.setShowWhen(false)
+            if (state.setsTotal > 0) b.setShortCriticalText("${minOf(state.setsDone + 1, state.setsTotal)}/${state.setsTotal}")
+        }
+        if (state.setsTotal > 0) {
+            val segments = List(state.setsTotal) { Notification.ProgressStyle.Segment(1).setColor(accent) }
+            b.setStyle(
+                Notification.ProgressStyle()
+                    .setStyledByProgress(true)
+                    .setProgressSegments(segments)
+                    .setProgress(state.setsDone),
+            )
+        }
+        if (state.canStart && resting) {
+            b.addAction(Notification.Action.Builder(Icon.createWithResource(this, R.drawable.ic_notif_play), "Zaczynam serię", action(ACTION_START, 1)).build())
+        }
+        if (state.canDone) {
+            b.addAction(Notification.Action.Builder(Icon.createWithResource(this, R.drawable.ic_notif_check), "Seria zrobiona", action(ACTION_DONE, 2)).build())
+        }
         return b.build()
     }
 }

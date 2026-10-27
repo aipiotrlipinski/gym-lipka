@@ -53,6 +53,8 @@ class WorkoutPlugin : Plugin() {
             restEndAt = call.getLong("restEndAt") ?: 0L,
             canStart = call.getBoolean("canStart") ?: false,
             canDone = call.getBoolean("canDone") ?: false,
+            setsDone = call.getInt("setsDone") ?: 0,
+            setsTotal = call.getInt("setsTotal") ?: 0,
         )
         try {
             WorkoutService.show(context, state)

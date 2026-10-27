@@ -18,6 +18,9 @@ interface LockState {
   restEndAt: number
   canStart: boolean
   canDone: boolean
+  /** Serie bieżącego ćwiczenia: zrobione / wszystkie (do paska postępu w Now Bar). */
+  setsDone: number
+  setsTotal: number
 }
 
 interface GymWorkoutPlugin {
@@ -73,9 +76,11 @@ export async function refreshLockScreen() {
   const r = restSnapshot()
   const restEndAt = r && r.endAt > Date.now() ? r.endAt : 0
   const sets = await setsOf(cur.workout.id)
+  const mine = cur.set ? sets.filter((x) => x.exerciseId === cur.set!.exerciseId) : []
+  const progress = { setsDone: mine.filter((x) => x.done).length, setsTotal: mine.length }
   const state: LockState = cur.set
-    ? { title: cur.exerciseName, text: setText(cur.set, sets), restEndAt, canStart: restEndAt > 0, canDone: true }
-    : { title: 'Wszystkie serie zrobione', text: 'Otwórz aplikację, żeby zakończyć trening', restEndAt: 0, canStart: false, canDone: false }
+    ? { title: cur.exerciseName, text: setText(cur.set, sets), restEndAt, canStart: restEndAt > 0, canDone: true, ...progress }
+    : { title: 'Wszystkie serie zrobione', text: 'Otwórz aplikację, żeby zakończyć trening', restEndAt: 0, canStart: false, canDone: false, setsDone: 0, setsTotal: 0 }
   const key = JSON.stringify(state)
   if (key === last) return
   last = key
