@@ -268,11 +268,19 @@ class WorkoutService : Service() {
             )
         }
         if (state.canStart && resting) {
-            b.addAction(Notification.Action.Builder(Icon.createWithResource(this, R.drawable.ic_notif_play), "Zaczynam serię", action(ACTION_START, 1)).build())
+            b.addAction(lockAction(R.drawable.ic_notif_play, "Zaczynam serię", ACTION_START, 1))
         }
         if (state.canDone) {
-            b.addAction(Notification.Action.Builder(Icon.createWithResource(this, R.drawable.ic_notif_check), "Seria zrobiona", action(ACTION_DONE, 2)).build())
+            b.addAction(lockAction(R.drawable.ic_notif_check, "Seria zrobiona", ACTION_DONE, 2))
         }
         return b.build()
     }
+
+    /** Przycisk działający na zablokowanym telefonie — bez proszenia o PIN/odcisk (seria to nie dane wrażliwe). */
+    @androidx.annotation.RequiresApi(36)
+    private fun lockAction(icon: Int, label: String, act: String, code: Int): Notification.Action =
+        Notification.Action.Builder(Icon.createWithResource(this, icon), label, action(act, code))
+            .setAuthenticationRequired(false)
+            .setContextual(false)
+            .build()
 }
