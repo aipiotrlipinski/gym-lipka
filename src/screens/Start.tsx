@@ -8,6 +8,7 @@ import { useNow } from '../lib/rest'
 import { Badge, Button, Card } from '../components/ui'
 import { ChevronIcon, GearIcon } from '../components/icons'
 import { useExercises } from '../components/exercises'
+import { StepsCard } from '../components/StepsCard'
 
 const DAYS = ['Pn', 'Wt', 'Śr', 'Cz', 'Pt', 'So', 'Nd']
 const WEEKLY_GOAL = 4
@@ -139,6 +140,8 @@ export function Start() {
           })}
         </div>
       </Card>
+
+      <StepsCard />
 
       {last && (
         <button

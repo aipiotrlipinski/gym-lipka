@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Gym Lipka</string>
+    <string name="title_activity_main">Gym Lipka</string>
+    <string name="package_name">pl.lipka.gym</string>
+    <string name="custom_url_scheme">pl.lipka.gym</string>
+</resources>

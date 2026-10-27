@@ -22,6 +22,7 @@ import { ExercisePicker, useExercises } from '../components/exercises'
 import { TipsToggle } from '../components/Tips'
 import { ExerciseThumb, PhotoSheet } from '../components/ExercisePhoto'
 import { exerciseImage } from '../lib/exerciseImage'
+import { syncWorkoutToHealth } from '../lib/health'
 
 const TYPE_SHORT = { rozgrzewka: 'R', robocza: '', drop: 'D' } as const
 const TYPE_LABEL = { rozgrzewka: 'Rozgrzewkowa', robocza: 'Robocza', drop: 'Drop set' } as const
@@ -120,6 +121,8 @@ export function Workout({ id }: { id: number }) {
   const finish = async () => {
     rest.stop()
     await finishWorkout(id)
+    // W APK trening trafia też do Health Connect / Google Fit (w tle, bez czekania).
+    syncWorkoutToHealth(id)
     navigate({ name: 'podsumowanie', id }, true)
   }
 
