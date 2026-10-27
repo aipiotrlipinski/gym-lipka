@@ -1,7 +1,10 @@
 package pl.lipka.gym
 
 import android.Manifest
+import android.content.Intent
 import android.os.Build
+import android.provider.Settings
+import androidx.core.app.NotificationManagerCompat
 import com.getcapacitor.JSObject
 import com.getcapacitor.PermissionState
 import com.getcapacitor.Plugin
@@ -57,6 +60,28 @@ class WorkoutPlugin : Plugin() {
         } catch (e: Exception) {
             call.reject("Nie udało się pokazać powiadomienia: ${e.message}")
         }
+    }
+
+    /** Czy powiadomienia (i kanał treningu) są włączone — do podpowiedzi w Ustawieniach. */
+    @PluginMethod
+    fun status(call: PluginCall) {
+        val nm = NotificationManagerCompat.from(context)
+        val channel = nm.getNotificationChannel(WorkoutService.CHANNEL)
+        call.resolve(
+            JSObject()
+                .put("enabled", nm.areNotificationsEnabled())
+                .put("channelBlocked", channel != null && channel.importance == NotificationManagerCompat.IMPORTANCE_NONE),
+        )
+    }
+
+    /** Ustawienia powiadomień aplikacji (tam m.in. „Pokazuj na ekranie blokady”). */
+    @PluginMethod
+    fun openSettings(call: PluginCall) {
+        val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+            .putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        context.startActivity(intent)
+        call.resolve()
     }
 
     @PluginMethod

@@ -6,6 +6,7 @@ import { CloseIcon } from '../components/icons'
 import { GymRunImport } from '../components/GymRunImport'
 import { BackupCard } from '../components/BackupCard'
 import { HealthCard } from '../components/HealthCard'
+import { LockScreenCard } from '../components/LockScreenCard'
 
 const MODES: { id: ThemeMode; label: string }[] = [
   { id: 'system', label: 'Systemowy' },
@@ -86,6 +87,8 @@ export function Settings({
 
       <div className="px-5 pb-2 pt-6 text-[13px] font-bold tracking-wide text-muted">GOOGLE FIT</div>
       <HealthCard />
+
+      <LockScreenCard />
 
       <div className="px-5 pb-2 pt-6 text-[13px] font-bold tracking-wide text-muted">KOPIA ZAPASOWA</div>
       <BackupCard />

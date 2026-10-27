@@ -23,6 +23,8 @@ interface LockState {
 interface GymWorkoutPlugin {
   show(s: LockState): Promise<void>
   hide(): Promise<void>
+  status(): Promise<{ enabled: boolean; channelBlocked: boolean }>
+  openSettings(): Promise<void>
   addListener(event: 'action', cb: (e: { type: 'start' | 'done' }) => void): Promise<{ remove: () => void }>
 }
 
@@ -110,4 +112,14 @@ export function startLockScreen() {
     return w ? [w, await setsOf(w.id), await db.exercises.count()] : null
   }).subscribe(() => void refreshLockScreen())
   void refreshLockScreen()
+}
+
+/** Czy Android pozwala pokazać powiadomienie treningowe (null w przeglądarce). */
+export async function lockScreenStatus(): Promise<{ enabled: boolean; channelBlocked: boolean } | null> {
+  if (!isApk) return null
+  return GymWorkout.status().catch(() => null)
+}
+
+export function openNotificationSettings() {
+  if (isApk) void GymWorkout.openSettings().catch(() => {})
 }

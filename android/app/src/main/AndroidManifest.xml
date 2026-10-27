@@ -76,6 +76,7 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.POST_PROMOTED_NOTIFICATIONS" />
 
     <!-- Health Connect: kroki (z Google Fit / telefonu) i zapis treningu siłowego z kaloriami -->
     <uses-permission android:name="android.permission.health.READ_STEPS" />

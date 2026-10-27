@@ -37,7 +37,9 @@ data class WorkoutState(
 class WorkoutService : Service() {
 
     companion object {
-        private const val CHANNEL = "trening"
+        // v2: kanał „domyślny” bez dźwięku — ciche (LOW) Android ukrywa na ekranie blokady.
+        const val CHANNEL = "trening_blokada"
+        private const val OLD_CHANNEL = "trening"
         private const val CHANNEL_REST = "koniec_przerwy"
         private const val ID = 4201
         private const val ID_REST = 4202
@@ -74,9 +76,12 @@ class WorkoutService : Service() {
         super.onCreate()
         instance = this
         val nm = getSystemService(NotificationManager::class.java)
+        nm.deleteNotificationChannel(OLD_CHANNEL)
         nm.createNotificationChannel(
-            NotificationChannel(CHANNEL, "Trening w toku", NotificationManager.IMPORTANCE_LOW).apply {
+            NotificationChannel(CHANNEL, "Trening w toku", NotificationManager.IMPORTANCE_DEFAULT).apply {
                 description = "Bieżąca seria i timer przerwy na ekranie blokady"
+                setSound(null, null)
+                enableVibration(false)
                 setShowBadge(false)
                 lockscreenVisibility = Notification.VISIBILITY_PUBLIC
             },
@@ -183,7 +188,6 @@ class WorkoutService : Service() {
             .setStyle(NotificationCompat.BigTextStyle().bigText(if (resting) "Przerwa\nPotem: ${state.text}" else state.text))
             .setOngoing(true)
             .setOnlyAlertOnce(true)
-            .setSilent(true)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setCategory(NotificationCompat.CATEGORY_PROGRESS)
             .setContentIntent(openApp())
@@ -194,6 +198,8 @@ class WorkoutService : Service() {
         } else {
             b.setShowWhen(false)
         }
+        // Android 16+: „Live Update” — powiadomienie wyróżnione na ekranie blokady i jako chip na pasku stanu.
+        b.extras.putBoolean("android.requestPromotedOngoing", true)
         if (state.canStart && resting) b.addAction(0, "Zaczynam serię", action(ACTION_START, 1))
         if (state.canDone) b.addAction(0, "Seria zrobiona", action(ACTION_DONE, 2))
         return b.build()
