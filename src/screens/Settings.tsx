@@ -4,6 +4,7 @@ import type { ThemeMode } from '../theme'
 import { Card } from '../components/ui'
 import { CloseIcon } from '../components/icons'
 import { GymRunImport } from '../components/GymRunImport'
+import { BackupCard } from '../components/BackupCard'
 
 const MODES: { id: ThemeMode; label: string }[] = [
   { id: 'system', label: 'Systemowy' },
@@ -79,8 +80,11 @@ export function Settings({
         </div>
       </Card>
       <p className="mx-5 mt-3 text-[13px] leading-relaxed text-muted">
-        Wszystkie dane zostają w tym telefonie. Kopia zapasowa pojawi się w etapie 4.
+        Wszystkie dane zostają w tym telefonie — dlatego rób kopię zapasową.
       </p>
+
+      <div className="px-5 pb-2 pt-6 text-[13px] font-bold tracking-wide text-muted">KOPIA ZAPASOWA</div>
+      <BackupCard />
 
       <div className="px-5 pb-2 pt-6 text-[13px] font-bold tracking-wide text-muted">IMPORT</div>
       <GymRunImport />

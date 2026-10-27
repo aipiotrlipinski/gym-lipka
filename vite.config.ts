@@ -3,16 +3,18 @@ import tailwindcss from '@tailwindcss/vite'
 import { defineConfig } from 'vite'
 import { VitePWA } from 'vite-plugin-pwa'
 
-// Aplikacja jest publikowana pod adresem https://aipiotrlipinski.github.io/gym-lipka/
-export default defineConfig({
-  base: '/gym-lipka/',
+// Wersja przeglądarkowa: https://aipiotrlipinski.github.io/gym-lipka/
+// Wersja APK (`vite build --mode apk`): pliki ładowane z telefonu, bez service workera — Capacitor sam działa offline.
+export default defineConfig(({ mode }) => ({
+  base: mode === 'apk' ? './' : '/gym-lipka/',
   define: {
-    __APP_VERSION__: JSON.stringify(`0.4.0 (${new Date().toISOString().slice(0, 10)})`),
+    __APP_VERSION__: JSON.stringify(`0.5.0 (${new Date().toISOString().slice(0, 10)})`),
   },
   plugins: [
     react(),
     tailwindcss(),
     VitePWA({
+      disable: mode === 'apk',
       registerType: 'autoUpdate',
       includeAssets: ['favicon.png', 'apple-touch-icon.png', 'icon.svg'],
       manifest: {
@@ -58,4 +60,4 @@ export default defineConfig({
       },
     }),
   ],
-})
+}))
