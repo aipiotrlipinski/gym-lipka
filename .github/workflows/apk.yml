@@ -37,7 +37,7 @@ jobs:
           # Przy błędzie najważniejsze linie trafiają do adnotacji (widać je bez otwierania logu).
           if ! ./gradlew assembleRelease --no-daemon > gradle.log 2>&1; then
             tail -40 gradle.log
-            grep -E "^e: |error:|What went wrong|FAILED|Could not|> " gradle.log | head -40 | while IFS= read -r line; do
+            { grep -E "^e: |error:" gradle.log | head -20; grep -A12 "What went wrong" gradle.log | head -40; } | while IFS= read -r line; do
               echo "::error::${line//%/%25}"
             done
             exit 1
