@@ -1,7 +1,7 @@
 import { registerPlugin } from '@capacitor/core'
 import { liveQuery } from 'dexie'
 import { db, type Workout, type WorkoutSet } from '../db'
-import { pickCurrent, setText } from './lockscreenModel'
+import { afterLockDone, pickCurrent, setText } from './lockscreenModel'
 import { isApk } from './native'
 import { onRestChange, rest, restSnapshot } from './rest'
 import { activeWorkout, setsOf } from './workout'
@@ -49,7 +49,7 @@ export interface Current {
   set?: WorkoutSet
   exerciseName: string
   restSec: number
-  /** Czy po tej serii jest jeszcze coś do zrobienia (wtedy po serii włącza się przerwa). */
+  /** Czy po tej serii jest jeszcze coś do zrobienia. */
   moreAfter: boolean
 }
 
@@ -91,10 +91,15 @@ export async function refreshLockScreen() {
 async function completeFromLockScreen() {
   const cur = await current()
   if (!cur?.set) return
+  const next = afterLockDone(cur.workout, await setsOf(cur.workout.id), cur.set.id)
   await db.sets.update(cur.set.id, { done: true })
-  if (cur.restSec > 0 && cur.moreAfter) rest.start(cur.restSec, cur.exerciseName)
+  if (cur.restSec > 0 && next.rest) rest.start(cur.restSec, cur.exerciseName)
   else rest.stop()
-  window.dispatchEvent(new CustomEvent(SET_DONE_EVENT, { detail: { exerciseId: cur.set.exerciseId } }))
+  // Superseria: powiadomienie od razu pokazuje kolejne ćwiczenie z rundy.
+  focusExerciseId = next.nextExerciseId
+  window.dispatchEvent(
+    new CustomEvent(SET_DONE_EVENT, { detail: { exerciseId: cur.set.exerciseId, nextExerciseId: next.nextExerciseId } }),
+  )
   await refreshLockScreen()
 }
 

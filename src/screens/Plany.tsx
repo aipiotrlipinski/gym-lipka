@@ -8,6 +8,7 @@ import { ChevronIcon, DownIcon, TrashIcon, UpIcon } from '../components/icons'
 import { ExercisePicker, useExercises } from '../components/exercises'
 import { ExerciseThumb } from '../components/ExercisePhoto'
 import { clock } from '../lib/format'
+import { linkedWithNext, removeAt, supersetLabel, swapAt } from '../lib/superset'
 
 function usePlans() {
   return useLiveQuery(async () => {
@@ -214,9 +215,7 @@ export function DayEdit({ id }: { id: number }) {
   const move = (i: number, dir: -1 | 1) => {
     const j = i + dir
     if (j < 0 || j >= day.exercises.length) return
-    const list = [...day.exercises]
-    ;[list[i], list[j]] = [list[j], list[i]]
-    save({ exercises: list })
+    save({ exercises: swapAt(day.exercises, i, j) })
   }
 
   const remove = async () => {
@@ -241,15 +240,24 @@ export function DayEdit({ id }: { id: number }) {
       </div>
 
       <SectionLabel>ĆWICZENIA · {day.exercises.length}</SectionLabel>
-      <div className="mx-5 flex flex-col gap-3">
+      <div className="mx-5 flex flex-col gap-1">
+        {day.exercises.some((e) => e.superset) && (
+          <p className="m-0 text-[13px] leading-snug text-muted">
+            W superserii robisz serię każdego ćwiczenia po kolei, przerwa dopiero po całej rundzie (czas przerwy z ostatniego ćwiczenia).
+          </p>
+        )}
         {day.exercises.map((e, i) => {
           const ex = exercises.find((x) => x.id === e.exerciseId)
+          const lbl = supersetLabel(day.exercises, i)
+          const linked = linkedWithNext(day.exercises, i)
           return (
-            <Card key={`${e.exerciseId}-${i}`} className="flex flex-col gap-3 p-4">
+            <div key={`${e.exerciseId}-${i}`} className="flex flex-col">
+            <Card className={`flex flex-col gap-3 p-4 ${lbl ? '!border-2 !border-solid !border-accent' : ''}`}>
               <div className="flex items-start gap-2">
                 <ExerciseThumb exercise={ex} size="sm" />
                 <span className="min-w-0 flex-1 pt-1.5 text-[15px] font-extrabold">
-                  {i + 1}. {ex?.name ?? '?'}
+                  {lbl ? <span className="text-accent">{lbl} </span> : `${i + 1}. `}
+                  {ex?.name ?? '?'}
                 </span>
                 <RoundButton label="W górę" onClick={() => move(i, -1)}>
                   <UpIcon />
@@ -257,7 +265,7 @@ export function DayEdit({ id }: { id: number }) {
                 <RoundButton label="W dół" onClick={() => move(i, 1)}>
                   <DownIcon />
                 </RoundButton>
-                <RoundButton label="Usuń z dnia" onClick={() => save({ exercises: day.exercises.filter((_, j) => j !== i) })}>
+                <RoundButton label="Usuń z dnia" onClick={() => save({ exercises: removeAt(day.exercises, (_, j) => j === i) })}>
                   <TrashIcon />
                 </RoundButton>
               </div>
@@ -280,6 +288,18 @@ export function DayEdit({ id }: { id: number }) {
                 </div>
               </div>
             </Card>
+            {i < day.exercises.length - 1 && (
+              <button
+                onClick={() => setEx(i, { superset: linked ? undefined : true })}
+                aria-pressed={linked}
+                className={`mx-auto my-1 flex h-8 items-center gap-1.5 rounded-full border-0 px-3 text-xs font-extrabold ${
+                  linked ? 'bg-accent text-on-accent' : 'bg-transparent text-muted'
+                }`}
+              >
+                {linked ? '⇅ Superseria · stuknij, aby rozłączyć' : '+ połącz w superserię'}
+              </button>
+            )}
+            </div>
           )
         })}
         <Button variant="outline" onClick={() => setPicker(true)} className="border-dashed !border-line !text-muted">

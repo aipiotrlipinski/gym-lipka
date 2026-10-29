@@ -31,3 +31,15 @@ describe('ekran blokady', () => {
     expect(setText(set(9, 30, 0, false, { weightKg: 0, durationSec: 60 }), [set(9, 30, 0, false)])).toBe('Seria 1 z 1 · 60 s')
   })
 })
+
+describe('ekran blokady — superseria', () => {
+  const ss = { id: 1, name: 'Upper A', startedAt: 0, status: 'trwa', items: [{ exerciseId: 10, restSec: 90, superset: true }, { exerciseId: 20, restSec: 90 }] } as Workout
+  const sets = [set(1, 10, 0, false), set(2, 10, 1, false), set(3, 20, 0, false), set(4, 20, 1, false)]
+
+  it('po serii A pokazuje B bez przerwy, po B wraca do A z przerwą', async () => {
+    const { afterLockDone } = await import('./lockscreenModel')
+    expect(afterLockDone(ss, sets, 1)).toEqual({ rest: false, nextExerciseId: 20 })
+    const afterA = sets.map((s) => (s.id === 1 ? { ...s, done: true } : s))
+    expect(afterLockDone(ss, afterA, 3)).toEqual({ rest: true, nextExerciseId: 10 })
+  })
+})

@@ -4,7 +4,7 @@ import { db } from '../db'
 import { navigate } from '../router'
 import { kg, setLabel, shortDate, thousands } from '../lib/format'
 import { exerciseHistory } from '../lib/stats'
-import { Button, Card, Confirm, Empty, SectionLabel, TopBar } from '../components/ui'
+import { Button, Card, Confirm, Empty, SavedTextField, SectionLabel, TopBar } from '../components/ui'
 import { LineChart } from '../components/LineChart'
 import { TipsCard } from '../components/Tips'
 import { ExercisePhoto } from '../components/ExercisePhoto'
@@ -65,7 +65,14 @@ export function ExerciseDetail({ id }: { id: number }) {
       <div className="px-5 pb-3">
         <ExercisePhoto exercise={exercise} />
       </div>
-      {exercise.note && <p className="mx-5 mb-3 mt-0 text-sm text-muted">Notatka: {exercise.note}</p>}
+      <div className="px-5 pb-3">
+        <SavedTextField
+          key={exercise.id}
+          label="Stała notatka (widać ją w każdym treningu)"
+          value={exercise.note ?? ''}
+          onSave={(v) => db.exercises.update(exercise.id, { note: v.trim() || undefined })}
+        />
+      </div>
       <TipsCard exercise={exercise} />
       <div className="h-3" />
 

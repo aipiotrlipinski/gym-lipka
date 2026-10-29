@@ -15,7 +15,10 @@ import {
   removeExercise,
   setsOf,
   swapExercise,
+  toggleSuperset,
 } from '../lib/workout'
+import { afterSet, groupOf, linkedWithNext, supersetLabel } from '../lib/superset'
+import { useSwipe } from '../components/useSwipe'
 import { Badge, Button, Card, Confirm, Empty, RoundButton, Sheet, Stepper, TextField } from '../components/ui'
 import { BackIcon, CheckIcon, ListBulletIcon } from '../components/icons'
 import { ExercisePicker, useExercises } from '../components/exercises'
@@ -60,20 +63,20 @@ export function Workout({ id }: { id: number }) {
   }, [live, cur?.exerciseId])
 
   // Ostatnia seria zaliczona z ekranu blokady → przejście do następnego niedokończonego ćwiczenia.
-  const [doneOutside, setDoneOutside] = useState<number | null>(null)
+  const [doneOutside, setDoneOutside] = useState<{ exerciseId: number; nextExerciseId?: number } | null>(null)
   useEffect(() => {
-    const on = (e: Event) => setDoneOutside((e as CustomEvent<{ exerciseId: number }>).detail.exerciseId)
+    const on = (e: Event) => setDoneOutside((e as CustomEvent<{ exerciseId: number; nextExerciseId?: number }>).detail)
     window.addEventListener(SET_DONE_EVENT, on)
     return () => window.removeEventListener(SET_DONE_EVENT, on)
   }, [])
   useEffect(() => {
-    if (doneOutside === null || !workout || !allSets) return
+    if (doneOutside === null || !workout) return
     setDoneOutside(null)
-    if (doneOutside !== cur?.exerciseId || allSets.some((s) => s.exerciseId === doneOutside && !s.done)) return
-    const at = workout.items.findIndex((it) => it.exerciseId === doneOutside)
-    const nxt = workout.items.findIndex((it, j) => j > at && allSets.some((x) => x.exerciseId === it.exerciseId && !x.done))
+    if (doneOutside.exerciseId !== cur?.exerciseId) return
+    // Następne ćwiczenie wybiera ekran blokady (w superserii — kolejne z rundy).
+    const nxt = workout.items.findIndex((it) => it.exerciseId === doneOutside.nextExerciseId)
     if (nxt >= 0) setIdx(nxt)
-  }, [doneOutside, workout, allSets, cur?.exerciseId])
+  }, [doneOutside, workout, cur?.exerciseId])
   const exercise = exercises.find((e) => e.id === cur?.exerciseId)
   const sets = useMemo(() => (allSets ?? []).filter((s) => s.exerciseId === cur?.exerciseId), [allSets, cur?.exerciseId])
 
@@ -85,6 +88,18 @@ export function Workout({ id }: { id: number }) {
   const prs = useMemo(() => livePRs(sets, bests), [sets, bests])
   const suggestion = useMemo(() => (prev ? suggest(exercise, cur, prev) : null), [prev, exercise, cur])
   const [hiddenTip, setHiddenTip] = useState<number | null>(null)
+
+  const at = Math.min(idx ?? 0, Math.max(0, items.length - 1))
+  const goTo = (j: number) => {
+    setIdx(j)
+    setEditingSet(null)
+  }
+  const swipe = useSwipe({
+    canPrev: at > 0,
+    canNext: at < items.length - 1,
+    onPrev: () => goTo(at - 1),
+    onNext: () => goTo(at + 1),
+  })
 
   if (workout === undefined || allSets === undefined) return null
   if (!workout) return <Empty title="Ten trening już nie istnieje" />
@@ -130,15 +145,13 @@ export function Workout({ id }: { id: number }) {
     await db.sets.update(s.id, { done: true })
     setEditingSet(null)
     if (!live || wasEditing) return
-    const restLeft = sets.filter((x) => !x.done && x.id !== s.id)
-    if (cur.restSec > 0 && (restLeft.length > 0 || nextItem)) rest.start(cur.restSec, exercise?.name ?? '')
-    // Po ostatniej serii ćwiczenia przechodzimy do następnego niezakończonego.
-    if (restLeft.length === 0) {
-      const nxt = items.findIndex(
-        (it, j) => j > i && allSets.some((x) => x.exerciseId === it.exerciseId && !x.done),
-      )
-      if (nxt >= 0) setIdx(nxt)
-    }
+    // Zwykłe ćwiczenie: przerwa, a po ostatniej serii — następne niedokończone.
+    // Superseria: od razu następne ćwiczenie z rundy, przerwa dopiero po całej rundzie.
+    const next = afterSet(items, allSets.map((x) => (x.id === s.id ? { ...x, done: true } : x)), i)
+    if (next.rest) {
+      if (cur.restSec > 0) rest.start(cur.restSec, exercise?.name ?? '')
+    } else if (next.goTo !== null) rest.stop()
+    if (next.goTo !== null && next.goTo !== i) setIdx(next.goTo)
   }
 
   const finish = async () => {
@@ -149,11 +162,15 @@ export function Workout({ id }: { id: number }) {
     navigate({ name: 'podsumowanie', id }, true)
   }
 
+  const [ga, gb] = groupOf(items, i)
+  const ssLabel = supersetLabel(items, i)
+  const partners = ga < gb ? items.slice(ga, gb + 1).filter((_, k) => ga + k !== i).map((it) => name(it.exerciseId)) : []
+
   const elapsed = live ? (now - workout.startedAt) / 1000 : ((workout.endedAt ?? workout.startedAt) - workout.startedAt) / 1000
   const undoneCount = allSets.filter((s) => !s.done).length
 
   return (
-    <div className="flex min-h-full flex-col">
+    <div className="flex min-h-full flex-col overflow-x-clip">
       {/* Pasek górny */}
       <div className="flex items-center justify-between px-5 pb-2 pt-5">
         <RoundButton label="Wstecz" onClick={() => back({ name: 'start' })}>
@@ -179,8 +196,8 @@ export function Workout({ id }: { id: number }) {
           </Button>
         </Empty>
       ) : (
-        <>
-          {/* Nagłówek ćwiczenia */}
+        <div {...swipe.handlers} style={swipe.style}>
+          {/* Nagłówek ćwiczenia — przesunięcie palcem w bok zmienia ćwiczenie */}
           <div className="flex items-start gap-3 px-5 pb-3 pt-2">
             {exerciseImage(exercise) && (
               <button
@@ -199,12 +216,36 @@ export function Workout({ id }: { id: number }) {
                 {workout.name.toUpperCase()} · ĆWICZENIE {i + 1} Z {items.length}
               </span>
               <span className="text-[26px] font-extrabold leading-tight tracking-tight text-ink">{exercise?.name ?? '…'}</span>
-              {cur.note && <span className="text-[13px] text-muted">Notatka: {cur.note}</span>}
+              {ssLabel && (
+                <span className="text-[13px] font-bold text-accent">
+                  Superseria {ssLabel} · z: {partners.join(', ')}
+                </span>
+              )}
             </button>
             <RoundButton label="Lista ćwiczeń" onClick={() => setSheet('list')}>
               <ListBulletIcon />
             </RoundButton>
           </div>
+
+          {(exercise?.note || cur.note) && (
+            <button
+              onClick={() => setSheet('menu')}
+              className="mx-5 mb-3 flex w-[calc(100%-40px)] flex-col gap-1 rounded-2xl border-0 bg-soft px-4 py-2.5 text-left text-[13px] leading-snug text-ink"
+            >
+              {exercise?.note && (
+                <span>
+                  <span className="font-extrabold">Notatka: </span>
+                  {exercise.note}
+                </span>
+              )}
+              {cur.note && (
+                <span>
+                  <span className="font-extrabold">Dziś: </span>
+                  {cur.note}
+                </span>
+              )}
+            </button>
+          )}
 
           <TipsToggle key={cur.exerciseId} exercise={exercise} />
 
@@ -293,7 +334,7 @@ export function Workout({ id }: { id: number }) {
               + Dodaj serię
             </Button>
           </Card>
-        </>
+        </div>
       )}
 
       <div className="flex-1" />
@@ -348,9 +389,10 @@ export function Workout({ id }: { id: number }) {
             {items.map((it, j) => {
               const ss = allSets.filter((s) => s.exerciseId === it.exerciseId)
               const d = ss.filter((s) => s.done).length
+              const lbl = supersetLabel(items, j)
               return (
+                <div key={it.exerciseId} className="flex flex-col">
                 <button
-                  key={it.exerciseId}
                   onClick={() => {
                     setIdx(j)
                     setEditingSet(null)
@@ -363,13 +405,16 @@ export function Workout({ id }: { id: number }) {
                   <span className="flex min-w-0 items-center gap-3">
                     <ExerciseThumb exercise={exercises.find((e) => e.id === it.exerciseId)} size="sm" />
                     <span className="text-[15px] font-bold text-ink">
-                      {j + 1}. {name(it.exerciseId)}
+                      {lbl ? <span className="text-accent">{lbl} </span> : `${j + 1}. `}
+                      {name(it.exerciseId)}
                     </span>
                   </span>
                   <span className={`shrink-0 text-xs font-bold ${d === ss.length && d > 0 ? 'text-accent' : 'text-muted'}`}>
                     {d}/{ss.length}
                   </span>
                 </button>
+                {linkedWithNext(items, j) && <SupersetLink />}
+                </div>
               )
             })}
             <Button variant="outline" onClick={() => setSheet('add')} className="mt-1">
@@ -394,6 +439,13 @@ export function Workout({ id }: { id: number }) {
         <ExerciseMenu
           exercise={exercise}
           note={cur.note ?? ''}
+          nextName={nextItem ? name(nextItem.exerciseId) : undefined}
+          linkedNext={linkedWithNext(items, i)}
+          prevName={i > 0 ? name(items[i - 1].exerciseId) : undefined}
+          linkedPrev={i > 0 && linkedWithNext(items, i - 1)}
+          onLinkNext={() => toggleSuperset(id, cur.exerciseId)}
+          onLinkPrev={() => toggleSuperset(id, items[i - 1].exerciseId)}
+          onExerciseNote={(n) => exercise && db.exercises.update(exercise.id, { note: n.trim() || undefined })}
           canPermanent={workout.planDayId !== undefined}
           onClose={() => setSheet(null)}
           onNote={(note) =>
@@ -520,9 +572,26 @@ function ActiveSet({
   )
 }
 
+/** Łącznik między ćwiczeniami superserii na liście. */
+export function SupersetLink() {
+  return (
+    <div className="flex items-center gap-2 py-1 pl-6 text-[11px] font-extrabold tracking-wide text-accent">
+      <span className="h-4 w-0.5 rounded-full bg-accent" />
+      SUPERSERIA
+    </div>
+  )
+}
+
 function ExerciseMenu({
   exercise,
   note,
+  nextName,
+  linkedNext,
+  prevName,
+  linkedPrev,
+  onLinkNext,
+  onLinkPrev,
+  onExerciseNote,
   canPermanent,
   onClose,
   onNote,
@@ -532,6 +601,13 @@ function ExerciseMenu({
 }: {
   exercise?: Exercise
   note: string
+  nextName?: string
+  linkedNext: boolean
+  prevName?: string
+  linkedPrev: boolean
+  onLinkNext: () => void
+  onLinkPrev: () => void
+  onExerciseNote: (n: string) => void
   canPermanent: boolean
   onClose: () => void
   onNote: (n: string) => void
@@ -540,20 +616,39 @@ function ExerciseMenu({
   onProgress: () => void
 }) {
   const [n, setN] = useState(note)
+  const [fixed, setFixed] = useState(exercise?.note ?? '')
   return (
     <Sheet title={exercise?.name ?? 'Ćwiczenie'} onClose={onClose}>
       <div className="flex flex-col gap-2 px-5 pb-2">
         <TextField
-          label="Notatka do ćwiczenia (na dziś)"
+          label="Stała notatka (w każdym treningu)"
+          value={fixed}
+          placeholder="np. siedzisko 4, uchwyt szeroki"
+          onChange={(v) => {
+            setFixed(v)
+            onExerciseNote(v)
+          }}
+        />
+        <TextField
+          label="Notatka tylko na dziś"
           value={n}
-          placeholder="np. bolał bark, ustawienie 4"
+          placeholder="np. bolał bark"
           onChange={(v) => {
             setN(v)
             onNote(v)
           }}
         />
-        {exercise?.note && <p className="m-0 text-[13px] text-muted">Stała notatka: {exercise.note}</p>}
-        <Button variant="soft" onClick={() => onSwap(false)} className="mt-2">
+        {nextName && (
+          <Button variant={linkedNext ? 'outline' : 'soft'} onClick={onLinkNext} className="mt-2">
+            {linkedNext ? `Rozłącz superserię z: ${nextName}` : `Superseria z następnym: ${nextName}`}
+          </Button>
+        )}
+        {linkedPrev && prevName && (
+          <Button variant="outline" onClick={onLinkPrev}>
+            Rozłącz superserię z: {prevName}
+          </Button>
+        )}
+        <Button variant="soft" onClick={() => onSwap(false)} className={nextName || linkedPrev ? '' : 'mt-2'}>
           Zamień ćwiczenie — tylko dziś
         </Button>
         {canPermanent && (

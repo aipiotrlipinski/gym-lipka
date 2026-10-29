@@ -12,6 +12,7 @@ export interface Exercise {
   muscle: MuscleGroup
   equipment: Equipment
   custom: boolean
+  /** Stała notatka — widoczna w każdym treningu z tym ćwiczeniem. */
   note?: string
   /** Zdjęcie z biblioteki (slug) — dla własnych ćwiczeń; wbudowane mają zdjęcie po nazwie. */
   image?: string
@@ -30,6 +31,8 @@ export interface PlanExercise {
   repsMin: number
   repsMax: number
   restSec: number
+  /** Superseria: to ćwiczenie jest połączone z następnym (bez przerwy między nimi). */
+  superset?: boolean
 }
 
 export interface PlanDay {
@@ -46,7 +49,10 @@ export interface WorkoutItem {
   restSec: number
   repsMin?: number
   repsMax?: number
+  /** Notatka tylko do tego treningu (stała notatka jest w `Exercise.note`). */
   note?: string
+  /** Superseria: to ćwiczenie jest połączone z następnym (bez przerwy między nimi). */
+  superset?: boolean
 }
 
 export interface Workout {

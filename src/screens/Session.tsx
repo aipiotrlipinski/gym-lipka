@@ -1,6 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useState } from 'react'
 import { db } from '../db'
+import { supersetLabel } from '../lib/superset'
 import { navigate } from '../router'
 import { duration, kg, longDate, setLabel, thousands, volume } from '../lib/format'
 import { workoutPRs } from '../lib/stats'
@@ -95,7 +96,8 @@ export function Session({ id, fresh = false }: { id: number; fresh?: boolean }) 
 
       <SectionLabel>ĆWICZENIA</SectionLabel>
       <div className="mx-5 flex flex-col gap-2">
-        {workout.items.map((it) => {
+        {workout.items.map((it, j) => {
+          const lbl = supersetLabel(workout.items, j)
           const ss = done.filter((s) => s.exerciseId === it.exerciseId)
           if (ss.length === 0) return null
           return (
@@ -104,7 +106,10 @@ export function Session({ id, fresh = false }: { id: number; fresh?: boolean }) 
               onClick={() => navigate({ name: 'cwiczenie', id: it.exerciseId })}
               className="flex flex-col gap-1.5 rounded-[20px] border border-solid border-line bg-card px-4 py-3 text-left"
             >
-              <span className="text-[15px] font-extrabold text-ink">{name(it.exerciseId)}</span>
+              <span className="text-[15px] font-extrabold text-ink">
+                {lbl && <span className="text-accent">{lbl} </span>}
+                {name(it.exerciseId)}
+              </span>
               <span className="text-[13px] tabular-nums text-muted">
                 {ss.map((s) => (s.type === 'rozgrzewka' ? `(${kg(s.weightKg)}×${s.reps})` : setLabel(s.weightKg, s.reps, s.durationSec))).join('  ·  ')}
               </span>

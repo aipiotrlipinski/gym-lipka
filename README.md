@@ -54,3 +54,4 @@ npm test         # testy (m.in. import z GymRun)
 - [x] Etap 4 — kopia zapasowa (Ustawienia → Kopia zapasowa), import z GymRun (Ustawienia → Import)
 - [x] Etap 5a — aplikacja APK, kroki z Google Fit, treningi i kalorie do Google Fit
 - [ ] Etap 5b — widget na ekran główny
+- [x] Superserie (w dniu planu „+ połącz w superserię” albo w menu ćwiczenia podczas treningu), stałe notatki do ćwiczeń, przesuwanie palcem między ćwiczeniami

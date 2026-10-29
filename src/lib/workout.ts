@@ -1,5 +1,6 @@
 import { db, type PlanDay, type SetType, type Workout, type WorkoutItem, type WorkoutSet } from '../db'
 import { lastSessionSets } from './stats'
+import { removeAt } from './superset'
 
 export async function activePlan() {
   return (await db.plans.toArray()).find((p) => p.active)
@@ -61,6 +62,7 @@ export async function startWorkout(planDayId?: number): Promise<number> {
     restSec: e.restSec,
     repsMin: e.repsMin,
     repsMax: e.repsMax,
+    ...(e.superset ? { superset: true } : {}),
   }))
   return db.transaction('rw', db.workouts, db.sets, async () => {
     const id = await db.workouts.add({
@@ -92,7 +94,7 @@ export async function addExercise(workoutId: number, exerciseId: number) {
 export async function removeExercise(workoutId: number, exerciseId: number) {
   const w = await db.workouts.get(workoutId)
   if (!w) return
-  await db.workouts.update(workoutId, { items: w.items.filter((i) => i.exerciseId !== exerciseId) })
+  await db.workouts.update(workoutId, { items: removeAt(w.items, (i) => i.exerciseId === exerciseId) })
   const ids = (await setsOf(workoutId)).filter((s) => s.exerciseId === exerciseId).map((s) => s.id)
   await db.sets.bulkDelete(ids)
 }
@@ -155,7 +157,7 @@ export async function finishWorkout(workoutId: number) {
     await db.workouts.update(workoutId, {
       status: 'zakończony',
       endedAt: w?.endedAt ?? Date.now(),
-      items: (w?.items ?? []).filter((i) => left.has(i.exerciseId)),
+      items: removeAt(w?.items ?? [], (i) => !left.has(i.exerciseId)),
     })
   })
 }
@@ -164,5 +166,14 @@ export async function deleteWorkout(workoutId: number) {
   await db.transaction('rw', db.workouts, db.sets, async () => {
     await db.sets.where('workoutId').equals(workoutId).delete()
     await db.workouts.delete(workoutId)
+  })
+}
+
+/** Łączy ćwiczenie z następnym w superserię albo je rozłącza (tylko w tym treningu). */
+export async function toggleSuperset(workoutId: number, exerciseId: number) {
+  const w = await db.workouts.get(workoutId)
+  if (!w) return
+  await db.workouts.update(workoutId, {
+    items: w.items.map((i) => (i.exerciseId === exerciseId ? { ...i, superset: i.superset ? undefined : true } : i)),
   })
 }
