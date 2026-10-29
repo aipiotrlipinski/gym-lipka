@@ -12,7 +12,8 @@ Każdy push do gałęzi `silka` buduje nowe APK pod tym samym adresem.
 
 - Pierwsze uruchomienie pyta o imię — na Start „Cześć, imię” (zmiana w Ustawieniach).
 - Kroki: stuknij słupek, żeby zobaczyć dowolny dzień; zakres 7 albo 30 dni.
-- Plany: obciążenie przy każdym ćwiczeniu prosto na ekranie Plany. Trening startuje z tego ciężaru, a po treningu plan sam przyjmuje ciężar, który zrobiłeś.
-- Historia: zwijane sekcje „Historia treningów” i „Masa ciała i pomiary”.
-- Pomiary ciała: waga, tłuszcz, woda, mięśnie, kości, tłuszcz trzewny, białko, BMR, wiek metaboliczny oraz obwody (szyja, klatka, ramię, przedramię, talia, brzuch, biodra, udo, łydka).
-- Wersja damska: 5 różowych kolorystyk w Ustawieniach → Kolorystyka (każda z jasnym i ciemnym wariantem).
+- Plany: obciążenie przy każdym ćwiczeniu prosto na ekranie Plany, wyróżnione kolorem kolorystyki. Trening startuje z tego ciężaru, a po treningu plan sam przyjmuje ciężar, który zrobiłeś.
+- Historia: kalendarz zawsze widoczny; zwijają się lista treningów i „Masa ciała i pomiary”.
+- Pomiary ciała: waga, tłuszcz, woda, mięśnie, BMR oraz obwody (klatka, ramię, przedramię, talia, brzuch, biodra, udo, łydka).
+- Wersja damska: 5 różowych kolorystyk w Ustawieniach → Kolorystyka (każda z jasnym i ciemnym wariantem; Malina i Róż i biel w ciemnym motywie na czarnym tle).
+- Ikona aplikacji w kolorze wybranej kolorystyki (zmienia się po wyjściu z aplikacji).

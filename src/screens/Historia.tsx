@@ -72,7 +72,7 @@ export function Historia() {
         Historia
       </ScreenTitle>
 
-      <Collapsible id="historia" title="HISTORIA TRENINGÓW" extra={`${MONTHS[ym.m].toLowerCase()} ${ym.y}`}>
+      {/* Kalendarz jest zawsze widoczny; zwijają się tylko lista treningów i pomiary ciała. */}
       <Card className="mx-5 flex flex-col gap-2.5 p-4">
         <div className="flex items-center justify-between">
           <RoundButton label="Poprzedni miesiąc" onClick={() => shift(-1)}>
@@ -112,7 +112,11 @@ export function Historia() {
         </div>
       </Card>
 
-      <div className="h-3" />
+      <Collapsible
+        id="historia"
+        title={`TRENINGI · ${MONTHS[ym.m].toUpperCase()}`}
+        extra={`${count} ${plural(count, 'trening', 'treningi', 'treningów')}`}
+      >
       {month && month.length === 0 && <Empty title="Brak treningów w tym miesiącu" />}
       <div className="mx-5 flex flex-col gap-2">
         {month?.map(({ w, sets }) => {

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Tło ikony aplikacji dla każdej kolorystyki (Ustawienia → Kolorystyka). -->
+<resources>
+    <color name="ic_bg_standard">#1F7A4D</color>
+    <color name="ic_bg_puder">#C2577A</color>
+    <color name="ic_bg_malina">#C2185B</color>
+    <color name="ic_bg_szampan">#A8546A</color>
+    <color name="ic_bg_fuksja">#D1127A</color>
+    <color name="ic_bg_roz_biel">#D63F72</color>
+</resources>

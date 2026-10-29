@@ -139,6 +139,7 @@ export function Stepper({
   label,
   decimal = false,
   compact = false,
+  accent = false,
 }: {
   value: number
   onChange: (v: number) => void
@@ -149,16 +150,23 @@ export function Stepper({
   decimal?: boolean
   /** Mniejsza wersja do list (np. obciążenie na ekranie Plany). */
   compact?: boolean
+  /** Wyróżnienie kolorem motywu (obciążenie w planach). */
+  accent?: boolean
 }) {
+  const btn = accent ? 'bg-accent text-on-accent' : 'bg-soft text-ink'
   const fmt = (n: number) => (Number.isInteger(n) ? String(n) : String(n).replace('.', ','))
   // W trakcie wpisywania trzymamy tekst lokalnie, żeby dało się wpisać np. „77,” przed „5”.
   const [draft, setDraft] = useState<string | null>(null)
   return (
-    <div className={`flex items-center justify-between gap-1 rounded-[14px] bg-row ${compact ? 'h-11 px-1' : 'h-[52px] px-1.5'}`}>
+    <div
+      className={`flex items-center justify-between gap-1 rounded-[14px] ${accent ? 'border border-solid border-accent/40 bg-accent/10' : 'bg-row'} ${
+        compact ? 'h-11 px-1' : 'h-[52px] px-1.5'
+      }`}
+    >
       <button
         aria-label={`${label}: mniej`}
         onClick={() => onChange(Math.max(min, +(value - step).toFixed(2)))}
-        className={`shrink-0 rounded-xl border-0 bg-soft font-bold text-ink ${compact ? 'h-9 w-9 text-lg' : 'h-10 w-9 text-xl'}`}
+        className={`shrink-0 rounded-xl border-0 font-bold ${btn} ${compact ? 'h-9 w-9 text-lg' : 'h-10 w-9 text-xl'}`}
       >
         −
       </button>
@@ -179,14 +187,14 @@ export function Stepper({
             const n = parseFloat(text.replace(',', '.'))
             if (Number.isFinite(n)) onChange(Math.max(min, n))
           }}
-          className={`min-w-0 max-w-full border-0 bg-transparent p-0 text-center font-extrabold text-ink outline-none ${compact ? 'text-base' : 'text-[19px]'}`}
+          className={`min-w-0 max-w-full border-0 bg-transparent p-0 text-center font-extrabold outline-none ${accent ? 'text-accent' : 'text-ink'} ${compact ? 'text-base' : 'text-[19px]'}`}
         />
-        {suffix && <span className="shrink-0 text-xs font-bold text-muted">{suffix}</span>}
+        {suffix && <span className={`shrink-0 text-xs font-bold ${accent ? 'text-accent' : 'text-muted'}`}>{suffix}</span>}
       </label>
       <button
         aria-label={`${label}: więcej`}
         onClick={() => onChange(+(value + step).toFixed(2))}
-        className={`shrink-0 rounded-xl border-0 bg-soft font-bold text-ink ${compact ? 'h-9 w-9 text-lg' : 'h-10 w-9 text-xl'}`}
+        className={`shrink-0 rounded-xl border-0 font-bold ${btn} ${compact ? 'h-9 w-9 text-lg' : 'h-10 w-9 text-xl'}`}
       >
         +
       </button>

@@ -68,15 +68,16 @@
   --on-accent: #ffffff;
 }
 :root[data-palette='malina'][data-theme='dark'] {
-  --bg: #1a0e14;
-  --card: #28161f;
-  --row: #1a0e14;
-  --soft: #40222f;
-  --line: #40222f;
-  --ink: #fbeef3;
+  /* Prawdziwa czerń (OLED) z malinowym akcentem. */
+  --bg: #000000;
+  --card: #120a0e;
+  --row: #000000;
+  --soft: #2a1520;
+  --line: #2a1520;
+  --ink: #ffffff;
   --muted: #c5a3b2;
-  --accent: #ff6fa3;
-  --on-accent: #1a0e14;
+  --accent: #ff4d8d;
+  --on-accent: #000000;
 }
 
 :root[data-palette='szampan'] {
@@ -137,15 +138,16 @@
   --on-accent: #ffffff;
 }
 :root[data-palette='roz-biel'][data-theme='dark'] {
-  --bg: #2a1220;
-  --card: #3a1a2c;
-  --row: #2a1220;
-  --soft: #52263e;
-  --line: #52263e;
-  --ink: #fff0f6;
-  --muted: #d9adc3;
+  /* Prawdziwa czerń: białe napisy i różowy akcent na czarnym tle. */
+  --bg: #000000;
+  --card: #141012;
+  --row: #000000;
+  --soft: #2b1f25;
+  --line: #2b1f25;
+  --ink: #ffffff;
+  --muted: #cdb3bf;
   --accent: #ff8fb5;
-  --on-accent: #2a1220;
+  --on-accent: #000000;
 }
 
 @theme inline {

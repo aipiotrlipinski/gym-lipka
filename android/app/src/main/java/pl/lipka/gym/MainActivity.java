@@ -10,6 +10,8 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(HealthPlugin.class);
         // Powiadomienie treningowe na ekranie blokady.
         registerPlugin(WorkoutPlugin.class);
+        // Ikona aplikacji w kolorze kolorystyki.
+        registerPlugin(AppIconPlugin.class);
         super.onCreate(savedInstanceState);
     }
 }

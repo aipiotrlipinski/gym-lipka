@@ -16,13 +16,87 @@
             android:theme="@style/AppTheme.NoActionBarLaunch"
             android:launchMode="singleTask"
             android:exported="true">
+        </activity>
 
+        <!-- Ikona aplikacji w kolorze wybranej kolorystyki: włączony jest zawsze dokładnie jeden alias (AppIconPlugin). -->
+        <activity-alias
+            android:name=".IconStandard"
+            android:enabled="true"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher_standard"
+            android:roundIcon="@mipmap/ic_launcher_standard"
+            android:label="@string/title_activity_main"
+            android:targetActivity=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-
-        </activity>
+        </activity-alias>
+        <activity-alias
+            android:name=".IconPuder"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher_puder"
+            android:roundIcon="@mipmap/ic_launcher_puder"
+            android:label="@string/title_activity_main"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".IconMalina"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher_malina"
+            android:roundIcon="@mipmap/ic_launcher_malina"
+            android:label="@string/title_activity_main"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".IconSzampan"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher_szampan"
+            android:roundIcon="@mipmap/ic_launcher_szampan"
+            android:label="@string/title_activity_main"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".IconFuksja"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher_fuksja"
+            android:roundIcon="@mipmap/ic_launcher_fuksja"
+            android:label="@string/title_activity_main"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".IconRozBiel"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher_roz_biel"
+            android:roundIcon="@mipmap/ic_launcher_roz_biel"
+            android:label="@string/title_activity_main"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
 
         <!-- Health Connect: ekran prywatności (Android 13 i starsze) -->
         <activity

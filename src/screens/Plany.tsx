@@ -46,7 +46,7 @@ function useLastWeights(ids: number[]) {
 /** Obciążenie w kg z przyciskami −/+ (krok 2,5 kg). */
 export function PlanWeight({ value, name, onChange }: { value: number; name: string; onChange: (v: number) => void }) {
   return (
-    <Stepper compact label={`Obciążenie: ${name}`} value={value} step={2.5} decimal suffix="kg" onChange={(v) => onChange(Math.round(v * 100) / 100)} />
+    <Stepper compact accent label={`Obciążenie: ${name}`} value={value} step={2.5} decimal suffix="kg" onChange={(v) => onChange(Math.round(v * 100) / 100)} />
   )
 }
 
@@ -322,10 +322,11 @@ export function DayEdit({ id }: { id: number }) {
                 </RoundButton>
               </div>
               <div className="grid grid-cols-2 gap-2">
-                <div className="col-span-2 flex flex-col gap-1 text-xs font-bold text-muted">
+                <div className="col-span-2 flex flex-col gap-1 text-xs font-bold text-accent">
                   Obciążenie
                   {e.weightKg === undefined && lastW?.get(e.exerciseId) !== undefined ? ` · ostatnio ${kg(lastW.get(e.exerciseId)!)} kg` : ''}
                   <Stepper
+                    accent
                     label="Obciążenie"
                     value={e.weightKg ?? lastW?.get(e.exerciseId) ?? 0}
                     step={2.5}

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { setPref, usePref } from './lib/prefs'
+import { setAppIcon } from './lib/appIcon'
 
 export type ThemeMode = 'system' | 'light' | 'dark'
 
@@ -9,10 +10,10 @@ export type Palette = 'standard' | 'puder' | 'malina' | 'szampan' | 'fuksja' | '
 export const PALETTES: { id: Palette; label: string; hint: string; swatch: [string, string, string] }[] = [
   { id: 'standard', label: 'Standard', hint: 'zielony / granat', swatch: ['#f6f5f1', '#ffffff', '#1f7a4d'] },
   { id: 'puder', label: 'Pudrowy róż', hint: 'stonowany, ciepły', swatch: ['#fbf6f5', '#ffffff', '#c2577a'] },
-  { id: 'malina', label: 'Malina', hint: 'biel + malinowy', swatch: ['#fff8fa', '#ffffff', '#c2185b'] },
+  { id: 'malina', label: 'Malina', hint: 'biel + malinowy · ciemny: czerń', swatch: ['#fff8fa', '#ffffff', '#c2185b'] },
   { id: 'szampan', label: 'Szampan', hint: 'beż + przygaszony róż', swatch: ['#f8f1ee', '#fffcfb', '#a8546a'] },
   { id: 'fuksja', label: 'Fuksja', hint: 'biel + mocny róż', swatch: ['#fdf7fa', '#ffffff', '#d1127a'] },
-  { id: 'roz-biel', label: 'Róż i biel', hint: 'różowe tło, białe karty', swatch: ['#fde8ef', '#ffffff', '#d63f72'] },
+  { id: 'roz-biel', label: 'Róż i biel', hint: 'różowe tło, białe karty · ciemny: czerń', swatch: ['#fde8ef', '#ffffff', '#d63f72'] },
 ]
 
 const KEY = 'gl-theme'
@@ -73,6 +74,7 @@ export function usePalette(): [Palette, (p: Palette) => void] {
     if (palette === 'standard') delete document.documentElement.dataset.palette
     else document.documentElement.dataset.palette = palette
     syncStatusBar()
+    setAppIcon(palette)
   }, [palette])
   return [palette, (p) => setPref(PALETTE_KEY, p === 'standard' ? null : p)]
 }

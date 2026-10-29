@@ -38,17 +38,16 @@ export interface Metric {
   lowerIsBetter?: boolean
 }
 
+/**
+ * Miary w formularzu i na kafelkach. Masa kostna, tłuszcz trzewny, białko, wiek metaboliczny i szyja
+ * zostały usunięte z aplikacji — stare wpisy z tymi polami zostają w bazie, ale się nie wyświetlają.
+ */
 export const METRICS: Metric[] = [
   { key: 'weightKg', label: 'Waga', short: 'Waga', unit: 'kg', group: 'sklad', decimals: 1 },
   { key: 'fatPct', label: 'Tkanka tłuszczowa', short: 'Tłuszcz', unit: '%', group: 'sklad', decimals: 1, lowerIsBetter: true },
   { key: 'waterPct', label: 'Woda w organizmie', short: 'Woda', unit: '%', group: 'sklad', decimals: 1 },
   { key: 'muscleKg', label: 'Masa mięśniowa', short: 'Mięśnie', unit: 'kg', group: 'sklad', decimals: 1 },
-  { key: 'boneKg', label: 'Masa kostna', short: 'Kości', unit: 'kg', group: 'sklad', decimals: 1 },
-  { key: 'visceral', label: 'Tłuszcz trzewny (poziom)', short: 'Trzewny', unit: '', group: 'sklad', decimals: 0, lowerIsBetter: true },
-  { key: 'proteinPct', label: 'Białko', short: 'Białko', unit: '%', group: 'sklad', decimals: 1 },
   { key: 'bmrKcal', label: 'Przemiana materii (BMR)', short: 'BMR', unit: 'kcal', group: 'sklad', decimals: 0 },
-  { key: 'metabolicAge', label: 'Wiek metaboliczny', short: 'Wiek met.', unit: 'lat', group: 'sklad', decimals: 0, lowerIsBetter: true },
-  { key: 'neckCm', label: 'Szyja', short: 'Szyja', unit: 'cm', group: 'obwody', decimals: 1 },
   { key: 'chestCm', label: 'Klatka piersiowa', short: 'Klatka', unit: 'cm', group: 'obwody', decimals: 1 },
   { key: 'armCm', label: 'Ramię (biceps)', short: 'Ramię', unit: 'cm', group: 'obwody', decimals: 1 },
   { key: 'forearmCm', label: 'Przedramię', short: 'Przedramię', unit: 'cm', group: 'obwody', decimals: 1 },
