@@ -10,8 +10,8 @@ export const STRENGTH_MET = 5.0
 
 /** Masa ciała z dnia treningu: ostatni pomiar sprzed treningu, a gdy takiego nie ma — najwcześniejszy późniejszy. */
 export function weightAt(body: BodyMeasurement[], at: number): number | undefined {
-  if (body.length === 0) return undefined
-  const sorted = [...body].sort((a, b) => a.date - b.date)
+  const sorted = body.filter((b) => typeof b.weightKg === 'number').sort((a, b) => a.date - b.date)
+  if (sorted.length === 0) return undefined
   const before = sorted.filter((b) => b.date <= at)
   return (before[before.length - 1] ?? sorted[0]).weightKg
 }

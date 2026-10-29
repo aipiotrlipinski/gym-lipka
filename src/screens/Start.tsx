@@ -9,6 +9,7 @@ import { Badge, Button, Card } from '../components/ui'
 import { ChevronIcon, GearIcon } from '../components/icons'
 import { useExercises } from '../components/exercises'
 import { StepsCard } from '../components/StepsCard'
+import { useName } from '../lib/prefs'
 
 const DAYS = ['Pn', 'Wt', 'Śr', 'Cz', 'Pt', 'So', 'Nd']
 const WEEKLY_GOAL = 4
@@ -25,6 +26,7 @@ export function Start() {
   const monday = weekStart(today).getTime()
   const todayIdx = (today.getDay() + 6) % 7
   const exercises = useExercises()
+  const userName = useName()
 
   const running = useLiveQuery(() => activeWorkout(), [])
   const next = useLiveQuery(() => nextPlanDay(), [])
@@ -52,7 +54,7 @@ export function Start() {
       <div className="flex items-center justify-between px-5 pb-2 pt-6">
         <div className="flex flex-col gap-0.5">
           <span className="text-[13px] text-muted">{dateLabel}</span>
-          <h1 className="m-0 text-[28px] font-extrabold tracking-tight">Cześć</h1>
+          <h1 className="m-0 text-[28px] font-extrabold tracking-tight">{userName ? `Cześć, ${userName}` : 'Cześć'}</h1>
         </div>
         <button
           onClick={() => navigate({ name: 'ustawienia' })}

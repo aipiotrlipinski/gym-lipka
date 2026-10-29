@@ -7,7 +7,8 @@ import { Badge, Button, Card, Confirm, Empty, RoundButton, ScreenTitle, SectionL
 import { ChevronIcon, DownIcon, TrashIcon, UpIcon } from '../components/icons'
 import { ExercisePicker, useExercises } from '../components/exercises'
 import { ExerciseThumb } from '../components/ExercisePhoto'
-import { clock } from '../lib/format'
+import { clock, kg } from '../lib/format'
+import { lastWorkingWeight } from '../lib/stats'
 import { linkedWithNext, removeAt, supersetLabel, swapAt } from '../lib/superset'
 
 function usePlans() {
@@ -18,6 +19,35 @@ function usePlans() {
       .sort((a, b) => Number(b.active) - Number(a.active) || a.createdAt - b.createdAt)
       .map((p) => ({ plan: p, days: days.filter((d) => d.planId === p.id).sort((a, b) => a.order - b.order) }))
   }, [])
+}
+
+/** Obciążenie ćwiczenia w dniu planu (czyta świeży stan, więc szybkie stukanie −/+ niczego nie gubi). */
+async function setPlanWeight(dayId: number, index: number, weightKg: number) {
+  await db.transaction('rw', db.planDays, async () => {
+    const day = await db.planDays.get(dayId)
+    if (!day) return
+    await db.planDays.update(dayId, { exercises: day.exercises.map((e, j) => (j === index ? { ...e, weightKg } : e)) })
+  })
+}
+
+/** Ciężary z ostatniego treningu — podpowiedź, gdy w planie nie wpisano obciążenia. */
+function useLastWeights(ids: number[]) {
+  const key = [...new Set(ids)].sort((a, b) => a - b).join(',')
+  return useLiveQuery(async () => {
+    const map = new Map<number, number>()
+    for (const id of key ? key.split(',').map(Number) : []) {
+      const w = await lastWorkingWeight(id)
+      if (w !== undefined) map.set(id, w)
+    }
+    return map
+  }, [key])
+}
+
+/** Obciążenie w kg z przyciskami −/+ (krok 2,5 kg). */
+export function PlanWeight({ value, name, onChange }: { value: number; name: string; onChange: (v: number) => void }) {
+  return (
+    <Stepper compact label={`Obciążenie: ${name}`} value={value} step={2.5} decimal suffix="kg" onChange={(v) => onChange(Math.round(v * 100) / 100)} />
+  )
 }
 
 async function createPlan() {
@@ -32,6 +62,7 @@ export function Plany() {
   const next = useLiveQuery(() => nextPlanDay(), [])
   const exercises = useExercises()
   const nameOf = (id: number) => exercises.find((e) => e.id === id)?.name ?? '?'
+  const lastW = useLastWeights(data?.filter((p) => p.plan.active).flatMap((p) => p.days.flatMap((d) => d.exercises.map((e) => e.exerciseId))) ?? [])
 
   return (
     <div className="pb-6">
@@ -63,36 +94,56 @@ export function Plany() {
             </div>
             {plan.active ? <Badge tone="accent">AKTYWNY</Badge> : <ChevronIcon />}
           </button>
+          {plan.active && days.some((d) => d.exercises.length > 0) && (
+            <span className="text-[12px] text-muted">Obciążenie wpisujesz tutaj — trening zacznie od tych ciężarów.</span>
+          )}
           {plan.active &&
             days.map((d) => {
               const isNext = next?.id === d.id
               return (
-                <button
+                <div
                   key={d.id}
-                  onClick={() => navigate({ name: 'dzien', id: d.id })}
-                  className={`flex items-center gap-3 rounded-2xl bg-row px-3.5 py-3 text-left ${
-                    isNext ? 'border-2 border-solid border-accent' : 'border-0'
-                  }`}
+                  className={`flex flex-col rounded-2xl bg-row ${isNext ? 'border-2 border-solid border-accent' : 'border-0'}`}
                 >
-                  <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                    <span className="text-[15px] font-bold text-ink">{d.name}</span>
-                    <span className="truncate text-xs text-muted">
-                      {d.exercises.length === 0
-                        ? 'brak ćwiczeń'
-                        : d.exercises
-                            .slice(0, 3)
-                            .map((e) => nameOf(e.exerciseId))
-                            .join(', ') + (d.exercises.length > 3 ? ` +${d.exercises.length - 3}` : '')}
-                    </span>
-                  </div>
-                  {isNext ? (
-                    <span className="text-[11px] font-extrabold text-accent">NASTĘPNY</span>
-                  ) : (
-                    <span className="text-muted">
-                      <ChevronIcon />
-                    </span>
+                  <button
+                    onClick={() => navigate({ name: 'dzien', id: d.id })}
+                    className="flex items-center gap-3 border-0 bg-transparent px-3.5 py-3 text-left"
+                  >
+                    <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                      <span className="text-[15px] font-bold text-ink">{d.name}</span>
+                      {d.exercises.length === 0 && <span className="text-xs text-muted">brak ćwiczeń — stuknij, żeby dodać</span>}
+                    </div>
+                    {isNext ? (
+                      <span className="text-[11px] font-extrabold text-accent">NASTĘPNY</span>
+                    ) : (
+                      <span className="text-muted">
+                        <ChevronIcon />
+                      </span>
+                    )}
+                  </button>
+                  {d.exercises.length > 0 && (
+                    <div className="flex flex-col gap-1.5 px-2 pb-2">
+                      {d.exercises.map((e, i) => {
+                        const nm = nameOf(e.exerciseId)
+                        const hint = lastW?.get(e.exerciseId)
+                        return (
+                          <div key={`${e.exerciseId}-${i}`} className="flex items-center gap-2 rounded-xl bg-card py-1 pl-3 pr-1">
+                            <div className="flex min-w-0 flex-1 flex-col">
+                              <span className="truncate text-[13px] font-bold text-ink">{nm}</span>
+                              <span className="text-[11px] text-muted">
+                                {e.sets} × {e.repsMin === e.repsMax ? e.repsMin : `${e.repsMin}–${e.repsMax}`}
+                                {e.weightKg === undefined && hint !== undefined ? ` · ostatnio ${kg(hint)} kg` : ''}
+                              </span>
+                            </div>
+                            <div className="w-[132px] shrink-0">
+                              <PlanWeight value={e.weightKg ?? hint ?? 0} name={nm} onChange={(v) => setPlanWeight(d.id, i, v)} />
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
                   )}
-                </button>
+                </div>
               )
             })}
         </Card>
@@ -203,6 +254,7 @@ export function PlanEdit({ id }: { id: number }) {
 export function DayEdit({ id }: { id: number }) {
   const day = useLiveQuery(() => db.planDays.get(id), [id])
   const exercises = useExercises()
+  const lastW = useLastWeights(day?.exercises.map((e) => e.exerciseId) ?? [])
   const [picker, setPicker] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
 
@@ -270,6 +322,18 @@ export function DayEdit({ id }: { id: number }) {
                 </RoundButton>
               </div>
               <div className="grid grid-cols-2 gap-2">
+                <div className="col-span-2 flex flex-col gap-1 text-xs font-bold text-muted">
+                  Obciążenie
+                  {e.weightKg === undefined && lastW?.get(e.exerciseId) !== undefined ? ` · ostatnio ${kg(lastW.get(e.exerciseId)!)} kg` : ''}
+                  <Stepper
+                    label="Obciążenie"
+                    value={e.weightKg ?? lastW?.get(e.exerciseId) ?? 0}
+                    step={2.5}
+                    decimal
+                    suffix="kg"
+                    onChange={(v) => setPlanWeight(id, i, Math.round(v * 100) / 100)}
+                  />
+                </div>
                 <div className="flex flex-col gap-1 text-xs font-bold text-muted">
                   Serie
                   <Stepper label="Serie" value={e.sets} step={1} min={1} onChange={(v) => setEx(i, { sets: Math.round(v) })} />

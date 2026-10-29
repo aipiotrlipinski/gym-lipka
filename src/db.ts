@@ -1,4 +1,5 @@
 import Dexie, { type EntityTable } from 'dexie'
+import type { MetricKey } from './lib/body'
 
 /** Baza danych w telefonie (IndexedDB). Model zgodny ze specyfikacją MVP. */
 
@@ -31,6 +32,8 @@ export interface PlanExercise {
   repsMin: number
   repsMax: number
   restSec: number
+  /** Obciążenie serii roboczych w kg; brak = ciężar z ostatniego treningu. Aktualizuje się po treningu. */
+  weightKg?: number
   /** Superseria: to ćwiczenie jest połączone z następnym (bez przerwy między nimi). */
   superset?: boolean
 }
@@ -81,10 +84,10 @@ export interface WorkoutSet {
   done: boolean
 }
 
-export interface BodyMeasurement {
+/** Pomiar ciała: waga, skład ciała i obwody — każde pole opcjonalne (zapisujemy tylko to, co zmierzone). Lista miar: lib/body.ts. */
+export interface BodyMeasurement extends Partial<Record<MetricKey, number>> {
   id: number
   date: number
-  weightKg: number
 }
 
 export const db = new Dexie('silka') as Dexie & {

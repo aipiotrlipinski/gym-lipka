@@ -17,6 +17,12 @@ export async function lastSessionSets(exerciseId: number, excludeWorkoutId?: num
   return sets.filter((s) => s.workoutId === last.id).sort((a, b) => a.order - b.order)
 }
 
+/** Ciężar serii roboczych z ostatniego treningu z tym ćwiczeniem (najcięższa seria) albo undefined. */
+export async function lastWorkingWeight(exerciseId: number): Promise<number | undefined> {
+  const work = (await lastSessionSets(exerciseId)).filter((s) => s.type !== 'rozgrzewka')
+  return work.length ? Math.max(...work.map((s) => s.weightKg)) : undefined
+}
+
 export interface Bests {
   maxWeight: number
   maxWeightReps: number

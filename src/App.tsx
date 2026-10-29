@@ -2,7 +2,9 @@ import { useEffect, useRef } from 'react'
 import { nextPlanDay, startWorkout } from './lib/workout'
 import { TabBar, type Tab } from './components/TabBar'
 import { back, navigate, useRoute, type Route } from './router'
-import { useTheme } from './theme'
+import { usePalette, useTheme } from './theme'
+import { useName } from './lib/prefs'
+import { Witaj } from './screens/Witaj'
 import { Start } from './screens/Start'
 import { Plany, PlanEdit, DayEdit } from './screens/Plany'
 import { Historia } from './screens/Historia'
@@ -84,6 +86,8 @@ function Screen({ route }: { route: Route }) {
 
 export default function App() {
   useTheme()
+  usePalette()
+  const name = useName()
   const route = useRoute()
   const tab = tabOf(route)
   const main = useRef<HTMLElement>(null)
@@ -92,6 +96,15 @@ export default function App() {
   useEffect(() => {
     main.current?.scrollTo(0, 0)
   }, [route])
+
+  // Pierwsze uruchomienie: najpierw imię (skrót „Zacznij trening” nie czeka).
+  if (name === null && route.name !== 'szybki-start') {
+    return (
+      <div className="mx-auto h-full max-w-[480px] overflow-y-auto" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
+        <Witaj />
+      </div>
+    )
+  }
 
   return (
     <div className="mx-auto flex h-full max-w-[480px] flex-col">

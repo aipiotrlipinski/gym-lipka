@@ -138,6 +138,7 @@ export function Stepper({
   suffix,
   label,
   decimal = false,
+  compact = false,
 }: {
   value: number
   onChange: (v: number) => void
@@ -146,16 +147,18 @@ export function Stepper({
   suffix?: string
   label: string
   decimal?: boolean
+  /** Mniejsza wersja do list (np. obciążenie na ekranie Plany). */
+  compact?: boolean
 }) {
   const fmt = (n: number) => (Number.isInteger(n) ? String(n) : String(n).replace('.', ','))
   // W trakcie wpisywania trzymamy tekst lokalnie, żeby dało się wpisać np. „77,” przed „5”.
   const [draft, setDraft] = useState<string | null>(null)
   return (
-    <div className="flex h-[52px] items-center justify-between gap-1 rounded-[14px] bg-row px-1.5">
+    <div className={`flex items-center justify-between gap-1 rounded-[14px] bg-row ${compact ? 'h-11 px-1' : 'h-[52px] px-1.5'}`}>
       <button
         aria-label={`${label}: mniej`}
         onClick={() => onChange(Math.max(min, +(value - step).toFixed(2)))}
-        className="h-10 w-9 shrink-0 rounded-xl border-0 bg-soft text-xl font-bold text-ink"
+        className={`shrink-0 rounded-xl border-0 bg-soft font-bold text-ink ${compact ? 'h-9 w-9 text-lg' : 'h-10 w-9 text-xl'}`}
       >
         −
       </button>
@@ -176,14 +179,14 @@ export function Stepper({
             const n = parseFloat(text.replace(',', '.'))
             if (Number.isFinite(n)) onChange(Math.max(min, n))
           }}
-          className="min-w-0 max-w-full border-0 bg-transparent p-0 text-center text-[19px] font-extrabold text-ink outline-none"
+          className={`min-w-0 max-w-full border-0 bg-transparent p-0 text-center font-extrabold text-ink outline-none ${compact ? 'text-base' : 'text-[19px]'}`}
         />
         {suffix && <span className="shrink-0 text-xs font-bold text-muted">{suffix}</span>}
       </label>
       <button
         aria-label={`${label}: więcej`}
         onClick={() => onChange(+(value + step).toFixed(2))}
-        className="h-10 w-9 shrink-0 rounded-xl border-0 bg-soft text-xl font-bold text-ink"
+        className={`shrink-0 rounded-xl border-0 bg-soft font-bold text-ink ${compact ? 'h-9 w-9 text-lg' : 'h-10 w-9 text-xl'}`}
       >
         +
       </button>

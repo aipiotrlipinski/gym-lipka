@@ -29,8 +29,11 @@ export async function activeWorkout(): Promise<Workout | undefined> {
   return db.workouts.where('status').equals('trwa').first()
 }
 
-/** Serie startowe dla ćwiczenia: rozgrzewki i ciężary z ostatniego razu, liczba serii roboczych z planu. */
-async function initialSets(workoutId: number, exerciseId: number, workingSets: number, repsMin: number) {
+/**
+ * Serie startowe dla ćwiczenia: rozgrzewki i ciężary z ostatniego razu, liczba serii roboczych z planu.
+ * Gdy plan ma wpisane obciążenie, serie robocze startują z niego.
+ */
+async function initialSets(workoutId: number, exerciseId: number, workingSets: number, repsMin: number, planWeightKg?: number) {
   const last = await lastSessionSets(exerciseId, workoutId)
   const warm = last.filter((s) => s.type === 'rozgrzewka')
   const work = last.filter((s) => s.type !== 'rozgrzewka')
@@ -43,7 +46,7 @@ async function initialSets(workoutId: number, exerciseId: number, workingSets: n
       exerciseId,
       order: rows.length,
       type: src?.type === 'drop' ? 'drop' : 'robocza',
-      weightKg: src?.weightKg ?? 0,
+      weightKg: planWeightKg ?? src?.weightKg ?? 0,
       // Serie na czas (np. deska z importu) nie mają powtórzeń — wtedy start z dolnej granicy zakresu.
       reps: src?.reps || repsMin,
       done: false,
@@ -73,7 +76,7 @@ export async function startWorkout(planDayId?: number): Promise<number> {
       items,
     } as Workout)
     for (const e of day?.exercises ?? []) {
-      await db.sets.bulkAdd((await initialSets(id, e.exerciseId, e.sets, e.repsMin)) as WorkoutSet[])
+      await db.sets.bulkAdd((await initialSets(id, e.exerciseId, e.sets, e.repsMin, e.weightKg)) as WorkoutSet[])
     }
     return id
   })
@@ -147,9 +150,9 @@ export function cycleType(t: SetType): SetType {
   return NEXT_TYPE[t]
 }
 
-/** Kończy trening: niewykonane serie są usuwane, puste ćwiczenia znikają z listy. */
+/** Kończy trening: niewykonane serie są usuwane, puste ćwiczenia znikają z listy. Obciążenia w planie dostają ciężary z tego treningu. */
 export async function finishWorkout(workoutId: number) {
-  await db.transaction('rw', db.workouts, db.sets, async () => {
+  await db.transaction('rw', db.workouts, db.sets, db.planDays, async () => {
     const sets = await setsOf(workoutId)
     await db.sets.bulkDelete(sets.filter((s) => !s.done).map((s) => s.id))
     const left = new Set(sets.filter((s) => s.done).map((s) => s.exerciseId))
@@ -159,6 +162,19 @@ export async function finishWorkout(workoutId: number) {
       endedAt: w?.endedAt ?? Date.now(),
       items: removeAt(w?.items ?? [], (i) => !left.has(i.exerciseId)),
     })
+    const day = w?.planDayId !== undefined ? await db.planDays.get(w.planDayId) : undefined
+    if (day) {
+      const top = new Map<number, number>()
+      for (const s of sets) {
+        if (!s.done || s.type === 'rozgrzewka') continue
+        top.set(s.exerciseId, Math.max(top.get(s.exerciseId) ?? 0, s.weightKg))
+      }
+      if ([...top.keys()].some((id) => day.exercises.some((e) => e.exerciseId === id && e.weightKg !== top.get(id)))) {
+        await db.planDays.update(day.id, {
+          exercises: day.exercises.map((e) => (top.has(e.exerciseId) ? { ...e, weightKg: top.get(e.exerciseId) } : e)),
+        })
+      }
+    }
   })
 }
 

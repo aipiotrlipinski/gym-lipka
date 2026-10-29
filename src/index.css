@@ -32,6 +32,122 @@
   color-scheme: dark;
 }
 
+/* Wersja damska — 5 różowych kolorystyk (Ustawienia → Kolorystyka). Każda ma wariant jasny i ciemny. */
+:root[data-palette='puder'] {
+  --bg: #fbf6f5;
+  --card: #ffffff;
+  --row: #f6ecec;
+  --soft: #f1e3e4;
+  --line: #eedfe0;
+  --ink: #2a1a1e;
+  --muted: #6e5a5f;
+  --accent: #c2577a;
+  --on-accent: #ffffff;
+}
+:root[data-palette='puder'][data-theme='dark'] {
+  --bg: #1f1519;
+  --card: #2c1f24;
+  --row: #1f1519;
+  --soft: #3d2c33;
+  --line: #3d2c33;
+  --ink: #f8eef1;
+  --muted: #bfa6ae;
+  --accent: #f0a3bc;
+  --on-accent: #2a121c;
+}
+
+:root[data-palette='malina'] {
+  --bg: #fff8fa;
+  --card: #ffffff;
+  --row: #fceef3;
+  --soft: #f9e3eb;
+  --line: #f4dce5;
+  --ink: #1f0f16;
+  --muted: #6b5560;
+  --accent: #c2185b;
+  --on-accent: #ffffff;
+}
+:root[data-palette='malina'][data-theme='dark'] {
+  --bg: #1a0e14;
+  --card: #28161f;
+  --row: #1a0e14;
+  --soft: #40222f;
+  --line: #40222f;
+  --ink: #fbeef3;
+  --muted: #c5a3b2;
+  --accent: #ff6fa3;
+  --on-accent: #1a0e14;
+}
+
+:root[data-palette='szampan'] {
+  --bg: #f8f1ee;
+  --card: #fffcfb;
+  --row: #f2e6e2;
+  --soft: #eddfda;
+  --line: #e8d8d2;
+  --ink: #2b1f1d;
+  --muted: #6f5e59;
+  --accent: #a8546a;
+  --on-accent: #ffffff;
+}
+:root[data-palette='szampan'][data-theme='dark'] {
+  --bg: #1c1615;
+  --card: #2a2120;
+  --row: #1c1615;
+  --soft: #3e3230;
+  --line: #3e3230;
+  --ink: #f6ece9;
+  --muted: #bba9a4;
+  --accent: #e3a0b0;
+  --on-accent: #24161a;
+}
+
+:root[data-palette='fuksja'] {
+  --bg: #fdf7fa;
+  --card: #ffffff;
+  --row: #fbeaf3;
+  --soft: #f8ddeb;
+  --line: #f3d3e3;
+  --ink: #1c0b14;
+  --muted: #6a5060;
+  --accent: #d1127a;
+  --on-accent: #ffffff;
+}
+:root[data-palette='fuksja'][data-theme='dark'] {
+  --bg: #160a12;
+  --card: #25111e;
+  --row: #160a12;
+  --soft: #3f1b31;
+  --line: #3f1b31;
+  --ink: #fdeef6;
+  --muted: #c49db3;
+  --accent: #ff4fa8;
+  --on-accent: #160a12;
+}
+
+:root[data-palette='roz-biel'] {
+  --bg: #fde8ef;
+  --card: #ffffff;
+  --row: #fcf0f4;
+  --soft: #f9dce6;
+  --line: #f5d3df;
+  --ink: #2a1220;
+  --muted: #75566a;
+  --accent: #d63f72;
+  --on-accent: #ffffff;
+}
+:root[data-palette='roz-biel'][data-theme='dark'] {
+  --bg: #2a1220;
+  --card: #3a1a2c;
+  --row: #2a1220;
+  --soft: #52263e;
+  --line: #52263e;
+  --ink: #fff0f6;
+  --muted: #d9adc3;
+  --accent: #ff8fb5;
+  --on-accent: #2a1220;
+}
+
 @theme inline {
   --color-bg: var(--bg);
   --color-card: var(--card);

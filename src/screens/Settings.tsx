@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { requestPersistentStorage } from '../db'
-import type { ThemeMode } from '../theme'
-import { Card } from '../components/ui'
+import { PALETTES, usePalette, type ThemeMode } from '../theme'
+import { saveName, useName } from '../lib/prefs'
+import { Card, SavedTextField } from '../components/ui'
 import { CloseIcon } from '../components/icons'
 import { GymRunImport } from '../components/GymRunImport'
 import { BackupCard } from '../components/BackupCard'
@@ -25,6 +26,8 @@ export function Settings({
 }) {
   const [persisted, setPersisted] = useState<boolean | null>(null)
   const [online, setOnline] = useState(navigator.onLine)
+  const name = useName()
+  const [palette, setPalette] = usePalette()
 
   useEffect(() => {
     requestPersistentStorage().then(setPersisted)
@@ -51,7 +54,11 @@ export function Settings({
         </button>
       </div>
 
-      <div className="px-5 pb-2 pt-4 text-[13px] font-bold tracking-wide text-muted">MOTYW</div>
+      <div className="px-5 pt-2">
+        <SavedTextField label="Imię" value={name ?? ''} onSave={(v) => v.trim() && saveName(v)} />
+      </div>
+
+      <div className="px-5 pb-2 pt-6 text-[13px] font-bold tracking-wide text-muted">MOTYW</div>
       <div role="radiogroup" aria-label="Motyw" className="mx-5 grid grid-cols-3 gap-1 rounded-2xl bg-soft p-1">
         {MODES.map((m) => (
           <button
@@ -66,6 +73,30 @@ export function Settings({
             {m.label}
           </button>
         ))}
+      </div>
+
+      <div className="px-5 pb-2 pt-6 text-[13px] font-bold tracking-wide text-muted">KOLORYSTYKA</div>
+      <div role="radiogroup" aria-label="Kolorystyka" className="mx-5 grid grid-cols-2 gap-2">
+        {PALETTES.map((p) => {
+          const on = palette === p.id
+          return (
+            <button
+              key={p.id}
+              role="radio"
+              aria-checked={on}
+              onClick={() => setPalette(p.id)}
+              className={`flex items-center gap-3 rounded-2xl border-2 border-solid bg-card px-3 py-2.5 text-left ${on ? 'border-accent' : 'border-line'}`}
+            >
+              <span className="relative h-9 w-9 shrink-0 overflow-hidden rounded-full border border-solid border-line" style={{ background: p.swatch[0] }} aria-hidden>
+                <span className="absolute bottom-0 right-0 h-5 w-5 rounded-tl-full" style={{ background: p.swatch[2] }} />
+              </span>
+              <span className="flex min-w-0 flex-col">
+                <span className={`text-sm ${on ? 'font-extrabold text-ink' : 'font-bold text-ink'}`}>{p.label}</span>
+                <span className="truncate text-[11px] text-muted">{p.hint}</span>
+              </span>
+            </button>
+          )
+        })}
       </div>
 
       <div className="px-5 pb-2 pt-6 text-[13px] font-bold tracking-wide text-muted">DANE</div>
