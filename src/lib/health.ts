@@ -78,7 +78,7 @@ export async function syncWorkoutToHealth(workoutId: number): Promise<boolean> {
     const weight = weightAt(await db.body.toArray(), w.startedAt)
     await GymHealth.saveWorkout({
       id: String(w.id),
-      title: `Gym Lipka · ${w.name}`,
+      title: `Siłka · ${w.name}`,
       start: w.startedAt,
       end: w.endedAt,
       activeKcal: activeKcal(w.endedAt - w.startedAt, weight),

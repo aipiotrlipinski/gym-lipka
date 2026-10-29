@@ -87,7 +87,7 @@ export interface BodyMeasurement {
   weightKg: number
 }
 
-export const db = new Dexie('gym-lipka') as Dexie & {
+export const db = new Dexie('silka') as Dexie & {
   exercises: EntityTable<Exercise, 'id'>
   plans: EntityTable<Plan, 'id'>
   planDays: EntityTable<PlanDay, 'id'>
@@ -106,30 +106,16 @@ db.version(1).stores({
 })
 
 /**
- * Przy pierwszym uruchomieniu wgrywa bazę ćwiczeń i plan startowy.
+ * Przy pierwszym uruchomieniu wgrywa bazę ćwiczeń. Bez planów — zaczynasz od zera.
  * Bezpieczne do wielokrotnego wywołania — działa tylko, gdy baza ćwiczeń jest pusta.
  */
 export async function ensureSeed() {
-  const { BUILTIN_EXERCISES, STARTER_PLAN } = await import('./data/exercises')
-  await db.transaction('rw', db.exercises, db.plans, db.planDays, async () => {
+  const { BUILTIN_EXERCISES } = await import('./data/exercises')
+  await db.transaction('rw', db.exercises, async () => {
     if ((await db.exercises.count()) > 0) return
     await db.exercises.bulkAdd(
       BUILTIN_EXERCISES.map(([name, muscle, equipment]) => ({ name, muscle, equipment, custom: false }) as Exercise),
     )
-    if ((await db.plans.count()) > 0) return
-    const all = await db.exercises.toArray()
-    const byName = new Map(all.map((e) => [e.name, e.id]))
-    const planId = await db.plans.add({ name: STARTER_PLAN.name, active: true, createdAt: Date.now() } as Plan)
-    for (const [i, day] of STARTER_PLAN.days.entries()) {
-      await db.planDays.add({
-        planId,
-        name: day.name,
-        order: i,
-        exercises: day.exercises
-          .filter(([n]) => byName.has(n))
-          .map(([n, sets, repsMin, repsMax, restSec]) => ({ exerciseId: byName.get(n)!, sets, repsMin, repsMax, restSec })),
-      } as PlanDay)
-    }
   })
 }
 

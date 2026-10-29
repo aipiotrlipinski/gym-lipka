@@ -36,7 +36,7 @@ export async function exportBackup(): Promise<Backup> {
 export function backupFileName(at = Date.now()) {
   const d = new Date(at)
   const pad = (n: number) => String(n).padStart(2, '0')
-  return `gym-lipka-kopia-${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}.json`
+  return `silka-kopia-${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}.json`
 }
 
 /** Sprawdza plik i zwraca kopię gotową do wgrania. Rzuca BackupError z komunikatem dla użytkownika. */
@@ -45,11 +45,11 @@ export function parseBackup(text: string): Backup {
   try {
     raw = JSON.parse(text)
   } catch {
-    throw new BackupError('To nie jest plik kopii Gym Lipka.')
+    throw new BackupError('To nie jest plik kopii Siłki.')
   }
   const b = raw as Partial<Backup>
   if (!b || b.app !== 'gym-lipka' || typeof b.data !== 'object' || b.data === null) {
-    throw new BackupError('To nie jest plik kopii Gym Lipka.')
+    throw new BackupError('To nie jest plik kopii Siłki.')
   }
   if (b.format !== 1) throw new BackupError('Ta kopia pochodzi z nowszej wersji aplikacji. Zaktualizuj aplikację.')
   for (const t of TABLES) {

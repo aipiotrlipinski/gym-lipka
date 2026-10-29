@@ -13,7 +13,7 @@ export async function saveTextFile(name: string, text: string, mime = 'applicati
     const { Filesystem, Directory, Encoding } = await import('@capacitor/filesystem')
     const { Share } = await import('@capacitor/share')
     const { uri } = await Filesystem.writeFile({ path: name, data: text, directory: Directory.Cache, encoding: Encoding.UTF8 })
-    await Share.share({ title: name, files: [uri], dialogTitle: 'Zapisz kopię Gym Lipka' })
+    await Share.share({ title: name, files: [uri], dialogTitle: 'Zapisz kopię Siłki' })
     return
   }
   const url = URL.createObjectURL(new Blob([text], { type: mime }))

@@ -1,6 +1,6 @@
 import 'fake-indexeddb/auto'
 import { beforeEach, describe, expect, it } from 'vitest'
-import { db, ensureSeed, type BodyMeasurement, type Workout, type WorkoutSet } from '../db'
+import { db, ensureSeed, type BodyMeasurement, type Plan, type PlanDay, type Workout, type WorkoutSet } from '../db'
 import { BackupError, exportBackup, parseBackup, restoreBackup, summarize } from './backup'
 import { startWorkout, finishWorkout, setsOf } from './workout'
 
@@ -8,6 +8,10 @@ beforeEach(async () => {
   await db.delete()
   await db.open()
   await ensureSeed()
+  // Siłka startuje bez planów — test zakłada własny, mały plan.
+  const ex = (await db.exercises.limit(2).toArray()).map((e) => ({ exerciseId: e.id, sets: 2, repsMin: 8, repsMax: 10, restSec: 60 }))
+  const planId = await db.plans.add({ name: 'Test', active: true, createdAt: 1 } as Plan)
+  await db.planDays.add({ planId, name: 'Dzień A', order: 0, exercises: ex } as PlanDay)
 })
 
 describe('kopia zapasowa', () => {

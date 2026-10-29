@@ -96,7 +96,7 @@ export function Settings({
       <div className="px-5 pb-2 pt-6 text-[13px] font-bold tracking-wide text-muted">IMPORT</div>
       <GymRunImport />
 
-      <p className="mx-5 mt-6 text-xs text-muted">Gym Lipka · wersja {__APP_VERSION__}</p>
+      <p className="mx-5 mt-6 text-xs text-muted">Siłka · wersja {__APP_VERSION__}</p>
     </div>
   )
 }

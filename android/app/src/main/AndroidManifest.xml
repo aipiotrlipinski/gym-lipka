@@ -28,7 +28,7 @@
         <activity
             android:name=".PrivacyActivity"
             android:exported="true"
-            android:label="Gym Lipka — prywatność">
+            android:label="Siłka — prywatność">
             <intent-filter>
                 <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE" />
             </intent-filter>

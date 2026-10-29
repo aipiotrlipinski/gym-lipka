@@ -1,17 +1,17 @@
-# Każdy push do main buduje aplikację APK i wystawia ją pod stałym adresem:
-# https://github.com/aipiotrlipinski/gym-lipka/releases/download/apk/gym-lipka.apk
-name: Aplikacja APK
+# Każdy push do gałęzi silka buduje aplikację APK i wystawia ją pod stałym adresem:
+# https://github.com/aipiotrlipinski/gym-lipka/releases/download/silka-apk/silka.apk
+name: Siłka — APK
 
 on:
   push:
-    branches: [main]
+    branches: [silka]
   workflow_dispatch:
 
 permissions:
   contents: write
 
 concurrency:
-  group: apk
+  group: silka-apk
   cancel-in-progress: true
 
 jobs:
@@ -42,18 +42,19 @@ jobs:
             done
             exit 1
           fi
-          cp app/build/outputs/apk/release/app-release.apk ../gym-lipka.apk
+          cp app/build/outputs/apk/release/app-release.apk ../silka.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: gym-lipka-apk
-          path: gym-lipka.apk
+          name: silka-apk
+          path: silka.apk
       - name: Publikacja pod stałym adresem
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: apk
-          name: Gym Lipka — aplikacja APK
+          tag_name: silka-apk
+          target_commitish: silka
+          name: Siłka — aplikacja APK
           body: |
             Najnowsza wersja aplikacji (build ${{ github.run_number }}).
-            Pobierz plik gym-lipka.apk na telefonie i zainstaluj. Nowa wersja instaluje się na starej, dane zostają.
-          files: gym-lipka.apk
-          make_latest: true
+            Pobierz plik silka.apk na telefonie i zainstaluj. Nowa wersja instaluje się na starej, dane zostają.
+          files: silka.apk
+          make_latest: false

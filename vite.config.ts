@@ -18,8 +18,8 @@ export default defineConfig(({ mode }) => ({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.png', 'apple-touch-icon.png', 'icon.svg'],
       manifest: {
-        name: 'Gym Lipka',
-        short_name: 'Gym Lipka',
+        name: 'Siłka',
+        short_name: 'Siłka',
         description: 'Szybki, darmowy i prywatny dziennik treningowy',
         lang: 'pl',
         start_url: '/gym-lipka/',

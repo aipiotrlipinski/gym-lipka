@@ -52,7 +52,7 @@ export function Start() {
       <div className="flex items-center justify-between px-5 pb-2 pt-6">
         <div className="flex flex-col gap-0.5">
           <span className="text-[13px] text-muted">{dateLabel}</span>
-          <h1 className="m-0 text-[28px] font-extrabold tracking-tight">Cześć, Piotr</h1>
+          <h1 className="m-0 text-[28px] font-extrabold tracking-tight">Cześć</h1>
         </div>
         <button
           onClick={() => navigate({ name: 'ustawienia' })}

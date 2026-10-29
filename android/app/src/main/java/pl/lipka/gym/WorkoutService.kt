@@ -49,8 +49,8 @@ class WorkoutService : Service() {
         private const val CHANNEL_REST = "koniec_przerwy"
         private const val ID = 4201
         private const val ID_REST = 4202
-        const val ACTION_START = "pl.lipka.gym.START_SET"
-        const val ACTION_DONE = "pl.lipka.gym.SET_DONE"
+        const val ACTION_START = "pl.lipka.silka.START_SET"
+        const val ACTION_DONE = "pl.lipka.silka.SET_DONE"
 
         private var instance: WorkoutService? = null
         private var current: WorkoutState? = null
