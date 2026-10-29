@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { db } from '../db'
 import { supersetLabel } from '../lib/superset'
 import { navigate } from '../router'
-import { duration, kg, longDate, setLabel, thousands, volume } from '../lib/format'
+import { duration, longDate, setLabel, thousands, volume } from '../lib/format'
 import { workoutPRs } from '../lib/stats'
 import { weightAt, workoutKcal } from '../lib/kcal'
 import { deleteWorkout, setsOf } from '../lib/workout'
@@ -81,7 +81,7 @@ export function Session({ id, fresh = false }: { id: number; fresh?: boolean }) 
               >
                 <div className="flex min-w-0 flex-col">
                   <span className="text-[15px] font-bold text-ink">{name(p.exerciseId)}</span>
-                  <span className="text-xs text-muted">{setLabel(p.set.weightKg, p.set.reps, p.set.durationSec)}</span>
+                  <span className="text-xs text-muted">{setLabel(p.set.weightKg, p.set.reps, p.set.durationSec, p.set.distanceM)}</span>
                 </div>
                 <Badge>{p.label}</Badge>
               </button>
@@ -111,7 +111,7 @@ export function Session({ id, fresh = false }: { id: number; fresh?: boolean }) 
                 {name(it.exerciseId)}
               </span>
               <span className="text-[13px] tabular-nums text-muted">
-                {ss.map((s) => (s.type === 'rozgrzewka' ? `(${kg(s.weightKg)}×${s.reps})` : setLabel(s.weightKg, s.reps, s.durationSec))).join('  ·  ')}
+                {ss.map((s) => (s.type === 'rozgrzewka' ? `(${setLabel(s.weightKg, s.reps, s.durationSec, s.distanceM)})` : setLabel(s.weightKg, s.reps, s.durationSec, s.distanceM))).join('  ·  ')}
               </span>
               {it.note && <span className="text-xs text-muted">Notatka: {it.note}</span>}
             </button>

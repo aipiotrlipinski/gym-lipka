@@ -1,6 +1,7 @@
 import { db, type PlanDay, type SetType, type Workout, type WorkoutItem, type WorkoutSet } from '../db'
 import { lastSessionSets } from './stats'
 import { removeAt } from './superset'
+import { defaultsFor, fieldsOf, measureOf } from './measure'
 
 export async function activePlan() {
   return (await db.plans.toArray()).find((p) => p.active)
@@ -29,16 +30,30 @@ export async function activeWorkout(): Promise<Workout | undefined> {
   return db.workouts.where('status').equals('trwa').first()
 }
 
+/** Pola wartości serii skopiowane z poprzedniej (albo domyślne dla sposobu zapisu). */
+function valuesFrom(src: WorkoutSet | undefined, m: ReturnType<typeof measureOf>, repsMin: number) {
+  const f = fieldsOf(m)
+  const d = defaultsFor(m)
+  const out: Pick<WorkoutSet, 'weightKg' | 'reps'> & Partial<Pick<WorkoutSet, 'durationSec' | 'distanceM'>> = {
+    weightKg: f.weight ? (src?.weightKg ?? d.weightKg) : 0,
+    reps: f.reps ? src?.reps || repsMin : 0,
+  }
+  if (f.duration) out.durationSec = src?.durationSec || d.durationSec
+  if (f.distance) out.distanceM = src?.distanceM ?? d.distanceM
+  return out
+}
+
 /**
  * Serie startowe dla ćwiczenia: rozgrzewki i ciężary z ostatniego razu, liczba serii roboczych z planu.
  * Gdy plan ma wpisane obciążenie, serie robocze startują z niego.
  */
 async function initialSets(workoutId: number, exerciseId: number, workingSets: number, repsMin: number, planWeightKg?: number) {
   const last = await lastSessionSets(exerciseId, workoutId)
+  const m = measureOf(await db.exercises.get(exerciseId))
   const warm = last.filter((s) => s.type === 'rozgrzewka')
   const work = last.filter((s) => s.type !== 'rozgrzewka')
   const rows: Omit<WorkoutSet, 'id'>[] = []
-  for (const w of warm) rows.push({ workoutId, exerciseId, order: rows.length, type: 'rozgrzewka', weightKg: w.weightKg, reps: w.reps, done: false })
+  for (const w of warm) rows.push({ workoutId, exerciseId, order: rows.length, type: 'rozgrzewka', ...valuesFrom(w, m, repsMin), done: false })
   for (let i = 0; i < workingSets; i++) {
     const src = work[i] ?? work[work.length - 1]
     rows.push({
@@ -46,9 +61,10 @@ async function initialSets(workoutId: number, exerciseId: number, workingSets: n
       exerciseId,
       order: rows.length,
       type: src?.type === 'drop' ? 'drop' : 'robocza',
-      weightKg: planWeightKg ?? src?.weightKg ?? 0,
-      // Serie na czas (np. deska z importu) nie mają powtórzeń — wtedy start z dolnej granicy zakresu.
-      reps: src?.reps || repsMin,
+      // Ciężar, powtórzenia, czas i dystans z ostatniego razu — tylko pola pasujące do sposobu zapisu.
+      ...valuesFrom(src, m, repsMin),
+      // Obciążenie wpisane w planie ma pierwszeństwo (tylko gdy ćwiczenie ma ciężar).
+      ...(planWeightKg !== undefined && fieldsOf(m).weight ? { weightKg: planWeightKg } : {}),
       done: false,
     })
   }
@@ -67,7 +83,7 @@ export async function startWorkout(planDayId?: number): Promise<number> {
     repsMax: e.repsMax,
     ...(e.superset ? { superset: true } : {}),
   }))
-  return db.transaction('rw', db.workouts, db.sets, async () => {
+  return db.transaction('rw', db.workouts, db.sets, db.exercises, async () => {
     const id = await db.workouts.add({
       name: day?.name ?? 'Pusty trening',
       planDayId: day?.id,
@@ -111,7 +127,7 @@ export async function swapExercise(workoutId: number, fromId: number, toId: numb
   const undone = old.filter((s) => !s.done)
   const item = w.items.find((i) => i.exerciseId === fromId)
   const workingCount = Math.max(1, undone.filter((s) => s.type !== 'rozgrzewka').length)
-  await db.transaction('rw', db.workouts, db.sets, db.planDays, async () => {
+  await db.transaction('rw', db.workouts, db.sets, db.planDays, db.exercises, async () => {
     await db.workouts.update(workoutId, {
       items: w.items.map((i) => (i.exerciseId === fromId ? { ...i, exerciseId: toId } : i)),
     })
@@ -134,13 +150,13 @@ export async function swapExercise(workoutId: number, fromId: number, toId: numb
 export async function addSet(workoutId: number, exerciseId: number) {
   const sets = (await setsOf(workoutId)).filter((s) => s.exerciseId === exerciseId)
   const last = sets[sets.length - 1]
+  const m = measureOf(await db.exercises.get(exerciseId))
   await db.sets.add({
     workoutId,
     exerciseId,
     order: (last?.order ?? -1) + 1,
     type: last?.type === 'rozgrzewka' ? 'robocza' : (last?.type ?? 'robocza'),
-    weightKg: last?.weightKg ?? 0,
-    reps: last?.reps ?? 8,
+    ...valuesFrom(last, m, 8),
     done: false,
   } as WorkoutSet)
 }

@@ -2,7 +2,8 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { useEffect, useMemo, useState } from 'react'
 import { db, type Exercise, type WorkoutSet } from '../db'
 import { back, navigate } from '../router'
-import { clock, kg, plural, setLabel } from '../lib/format'
+import { clock, kg, plural, setLabel, setLabelAs } from '../lib/format'
+import { fieldsOf, measureOf } from '../lib/measure'
 import { exerciseBests, lastSessionSets, livePRs } from '../lib/stats'
 import { suggest } from '../lib/progress'
 import { rest, unlockAudio, useNow, useRest, useWakeLock } from '../lib/rest'
@@ -115,7 +116,7 @@ export function Workout({ id }: { id: number }) {
    * Zmiana ciężaru/powtórzeń w niezaliczonej serii przechodzi też na kolejne niezaliczone serie
    * tego samego typu — wpisujesz raz, a nie w każdej serii od zera.
    */
-  const updateForward = async (s: WorkoutSet, patch: Partial<Pick<WorkoutSet, 'weightKg' | 'reps'>>) => {
+  const updateForward = async (s: WorkoutSet, patch: SetPatch) => {
     const targets = s.done ? [s] : sets.filter((x) => x.order >= s.order && !x.done && x.type === s.type)
     await db.transaction('rw', db.sets, async () => {
       for (const t of targets) await db.sets.update(t.id, patch)
@@ -130,7 +131,9 @@ export function Workout({ id }: { id: number }) {
     suggestion !== null &&
     hiddenTip !== cur?.exerciseId &&
     undoneWork.some((x) => x.weightKg !== suggestion.weightKg || x.reps !== suggestion.reps)
-  const firstTime = live && prev !== undefined && prev.length === 0 && !workDone && undoneWork.every((x) => x.weightKg === 0)
+  const measure = measureOf(exercise)
+  const firstTime =
+    live && fieldsOf(measure).weight && prev !== undefined && prev.length === 0 && !workDone && undoneWork.every((x) => x.weightKg === 0)
 
   const applySuggestion = async () => {
     if (!suggestion) return
@@ -284,8 +287,8 @@ export function Workout({ id }: { id: number }) {
                     key={s.id}
                     set={s}
                     number={sets.filter((x, k) => k <= n && x.type !== 'rozgrzewka').length}
-                    prevLabel={p ? setLabel(p.weightKg, p.reps, p.durationSec) : undefined}
-                    repsHint={cur.repsMin ? `${cur.repsMin}–${cur.repsMax}` : undefined}
+                    prevLabel={p ? setLabel(p.weightKg, p.reps, p.durationSec, p.distanceM) : undefined}
+                    repsHint={cur.repsMin && measure === 'ciężar' ? `${cur.repsMin}–${cur.repsMax}` : undefined}
                     editing={s.done}
                     exercise={exercise}
                     onComplete={() => complete(s)}
@@ -316,7 +319,7 @@ export function Workout({ id }: { id: number }) {
                     {s.done ? <CheckIcon size={14} /> : TYPE_SHORT[s.type] || workN}
                   </span>
                   <span className={`flex-1 text-base tabular-nums ${s.done ? 'font-extrabold' : 'font-semibold'}`}>
-                    {s.weightKg === 0 ? 'MC' : `${kg(s.weightKg)} kg`} × {s.reps}
+                    {measure === 'ciężar' ? `${s.weightKg === 0 ? 'MC' : `${kg(s.weightKg)} kg`} × ${s.reps}` : setLabelAs(measure, s)}
                   </span>
                   {pr ? (
                     <Badge>{pr}</Badge>
@@ -325,7 +328,7 @@ export function Workout({ id }: { id: number }) {
                   ) : s.type === 'drop' ? (
                     <span className="text-xs text-muted">drop set</span>
                   ) : p ? (
-                    <span className="text-xs text-muted">było {setLabel(p.weightKg, p.reps, p.durationSec)}</span>
+                    <span className="text-xs text-muted">było {setLabel(p.weightKg, p.reps, p.durationSec, p.distanceM)}</span>
                   ) : null}
                 </button>
               )
@@ -499,7 +502,12 @@ export function Workout({ id }: { id: number }) {
   )
 }
 
-/** Rozwinięta seria: ciężar i powtórzenia z przyciskami − / + oraz „Zalicz serię”. */
+type SetPatch = Partial<Pick<WorkoutSet, 'weightKg' | 'reps' | 'durationSec' | 'distanceM'>>
+
+/**
+ * Rozwinięta seria z przyciskami − / + oraz „Zalicz serię”. Pola zależą od sposobu zapisu ćwiczenia:
+ * ciężar × powtórzenia, sam czas (deska), dystans i czas (bieżnia) albo ciężar i dystans (spacer farmera).
+ */
 function ActiveSet({
   set,
   number,
@@ -523,10 +531,47 @@ function ActiveSet({
   onUndo: () => void
   onDelete: () => void
   onCancel?: () => void
-  onChange: (patch: Partial<Pick<WorkoutSet, 'weightKg' | 'reps'>>) => void
+  onChange: (patch: SetPatch) => void
 }) {
   // Hantle zwykle rosną co 1–2 kg, sztanga i maszyny co 2,5 kg.
   const step = exercise?.equipment === 'hantle' ? 1 : 2.5
+  const measure = measureOf(exercise)
+  const weight = (
+    <Stepper
+      label={exercise?.equipment === 'masa ciała' ? 'Obciążenie' : 'Ciężar'}
+      value={set.weightKg}
+      step={step}
+      decimal
+      suffix="kg"
+      onChange={(v) => onChange({ weightKg: v })}
+    />
+  )
+  const fields =
+    measure === 'czas' ? (
+      <Stepper label="Czas" value={set.durationSec ?? 0} step={5} suffix="s" onChange={(v) => onChange({ durationSec: Math.round(v) })} />
+    ) : measure === 'cardio' ? (
+      <div className="grid grid-cols-2 gap-2">
+        <Stepper label="Dystans" value={set.distanceM ?? 0} step={100} suffix="m" onChange={(v) => onChange({ distanceM: Math.round(v) })} />
+        <Stepper
+          label="Czas"
+          value={Math.round(((set.durationSec ?? 0) / 60) * 10) / 10}
+          step={1}
+          decimal
+          suffix="min"
+          onChange={(v) => onChange({ durationSec: Math.round(v * 60) })}
+        />
+      </div>
+    ) : measure === 'ciężar-dystans' ? (
+      <div className="grid grid-cols-2 gap-2">
+        {weight}
+        <Stepper label="Dystans" value={set.distanceM ?? 0} step={10} suffix="m" onChange={(v) => onChange({ distanceM: Math.round(v) })} />
+      </div>
+    ) : (
+      <div className="grid gap-2" style={{ gridTemplateColumns: 'minmax(0, 1.3fr) minmax(0, 1fr)' }}>
+        {weight}
+        <Stepper label="Powtórzenia" value={set.reps} step={1} suffix="×" onChange={(v) => onChange({ reps: Math.round(v) })} />
+      </div>
+    )
   const title = set.type === 'rozgrzewka' ? 'Rozgrzewka' : set.type === 'drop' ? `Drop set` : `Seria ${number}`
   return (
     <div className="flex flex-col gap-2.5 rounded-[18px] border-2 border-solid border-accent p-3.5">
@@ -542,10 +587,7 @@ function ActiveSet({
           {prevLabel ? `ostatnio ${prevLabel}` : repsHint ? `cel ${repsHint} powt.` : 'pierwszy raz'}
         </span>
       </div>
-      <div className="grid gap-2" style={{ gridTemplateColumns: 'minmax(0, 1.3fr) minmax(0, 1fr)' }}>
-        <Stepper label="Ciężar" value={set.weightKg} step={step} decimal suffix="kg" onChange={(v) => onChange({ weightKg: v })} />
-        <Stepper label="Powtórzenia" value={set.reps} step={1} suffix="×" onChange={(v) => onChange({ reps: Math.round(v) })} />
-      </div>
+      {fields}
       {editing ? (
         <div className="grid grid-cols-2 gap-2">
           <Button variant="soft" onClick={onUndo}>

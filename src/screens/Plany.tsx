@@ -9,6 +9,7 @@ import { ExercisePicker, useExercises } from '../components/exercises'
 import { ExerciseThumb } from '../components/ExercisePhoto'
 import { clock, kg } from '../lib/format'
 import { lastWorkingWeight } from '../lib/stats'
+import { fieldsOf, measureOf, measureShort } from '../lib/measure'
 import { linkedWithNext, removeAt, supersetLabel, swapAt } from '../lib/superset'
 
 function usePlans() {
@@ -126,18 +127,23 @@ export function Plany() {
                       {d.exercises.map((e, i) => {
                         const nm = nameOf(e.exerciseId)
                         const hint = lastW?.get(e.exerciseId)
+                        const ms = measureOf(exercises.find((x) => x.id === e.exerciseId))
                         return (
                           <div key={`${e.exerciseId}-${i}`} className="flex items-center gap-2 rounded-xl bg-card py-1 pl-3 pr-1">
                             <div className="flex min-w-0 flex-1 flex-col">
                               <span className="truncate text-[13px] font-bold text-ink">{nm}</span>
                               <span className="text-[11px] text-muted">
-                                {e.sets} × {e.repsMin === e.repsMax ? e.repsMin : `${e.repsMin}–${e.repsMax}`}
-                                {e.weightKg === undefined && hint !== undefined ? ` · ostatnio ${kg(hint)} kg` : ''}
+                                {ms === 'ciężar'
+                                  ? `${e.sets} × ${e.repsMin === e.repsMax ? e.repsMin : `${e.repsMin}–${e.repsMax}`}`
+                                  : `${e.sets} ${e.sets === 1 ? 'seria' : 'serie'} · ${measureShort(ms)}`}
+                                {fieldsOf(ms).weight && e.weightKg === undefined && hint !== undefined ? ` · ostatnio ${kg(hint)} kg` : ''}
                               </span>
                             </div>
-                            <div className="w-[132px] shrink-0">
-                              <PlanWeight value={e.weightKg ?? hint ?? 0} name={nm} onChange={(v) => setPlanWeight(d.id, i, v)} />
-                            </div>
+                            {fieldsOf(ms).weight && (
+                              <div className="w-[132px] shrink-0">
+                                <PlanWeight value={e.weightKg ?? hint ?? 0} name={nm} onChange={(v) => setPlanWeight(d.id, i, v)} />
+                              </div>
+                            )}
                           </div>
                         )
                       })}
@@ -322,6 +328,7 @@ export function DayEdit({ id }: { id: number }) {
                 </RoundButton>
               </div>
               <div className="grid grid-cols-2 gap-2">
+                {fieldsOf(measureOf(ex)).weight && (
                 <div className="col-span-2 flex flex-col gap-1 text-xs font-bold text-accent">
                   Obciążenie
                   {e.weightKg === undefined && lastW?.get(e.exerciseId) !== undefined ? ` · ostatnio ${kg(lastW.get(e.exerciseId)!)} kg` : ''}
@@ -335,6 +342,7 @@ export function DayEdit({ id }: { id: number }) {
                     onChange={(v) => setPlanWeight(id, i, Math.round(v * 100) / 100)}
                   />
                 </div>
+                )}
                 <div className="flex flex-col gap-1 text-xs font-bold text-muted">
                   Serie
                   <Stepper label="Serie" value={e.sets} step={1} min={1} onChange={(v) => setEx(i, { sets: Math.round(v) })} />
@@ -343,6 +351,8 @@ export function DayEdit({ id }: { id: number }) {
                   Przerwa · {clock(e.restSec)}
                   <Stepper label="Przerwa w sekundach" value={e.restSec} step={15} min={0} suffix="s" onChange={(v) => setEx(i, { restSec: Math.round(v) })} />
                 </div>
+                {measureOf(ex) === 'ciężar' ? (
+                <>
                 <div className="flex flex-col gap-1 text-xs font-bold text-muted">
                   Powtórzenia od
                   <Stepper label="Powtórzenia od" value={e.repsMin} step={1} min={1} onChange={(v) => setEx(i, { repsMin: Math.round(v), repsMax: Math.max(Math.round(v), e.repsMax) })} />
@@ -351,6 +361,12 @@ export function DayEdit({ id }: { id: number }) {
                   do
                   <Stepper label="Powtórzenia do" value={e.repsMax} step={1} min={1} onChange={(v) => setEx(i, { repsMax: Math.round(v), repsMin: Math.min(Math.round(v), e.repsMin) })} />
                 </div>
+                </>
+                ) : (
+                  <p className="col-span-2 m-0 text-xs leading-snug text-muted">
+                    {{ czas: 'Czas serii', cardio: 'Dystans i czas', 'ciężar-dystans': 'Ciężar i dystans', ciężar: '' }[measureOf(ex)]} wpisujesz w treningu — podpowie się z ostatniego razu.
+                  </p>
+                )}
               </div>
             </Card>
             {i < day.exercises.length - 1 && (

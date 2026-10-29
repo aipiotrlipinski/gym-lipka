@@ -1,7 +1,8 @@
 import { registerPlugin } from '@capacitor/core'
 import { liveQuery } from 'dexie'
-import { db, type Workout, type WorkoutSet } from '../db'
+import { db, type Measure, type Workout, type WorkoutSet } from '../db'
 import { afterLockDone, pickCurrent, setText } from './lockscreenModel'
+import { measureOf } from './measure'
 import { isApk } from './native'
 import { onRestChange, rest, restSnapshot } from './rest'
 import { activeWorkout, setsOf } from './workout'
@@ -48,6 +49,7 @@ export interface Current {
   workout: Workout
   set?: WorkoutSet
   exerciseName: string
+  measure: Measure
   restSec: number
   /** Czy po tej serii jest jeszcze coś do zrobienia. */
   moreAfter: boolean
@@ -59,7 +61,7 @@ async function current(): Promise<Current | null> {
   const sets = await setsOf(workout.id)
   const { item, set, moreAfter } = pickCurrent(workout, sets, focusExerciseId)
   const ex = item ? await db.exercises.get(item.exerciseId) : undefined
-  return { workout, set, exerciseName: ex?.name ?? '', restSec: item?.restSec ?? 0, moreAfter }
+  return { workout, set, exerciseName: ex?.name ?? '', measure: measureOf(ex), restSec: item?.restSec ?? 0, moreAfter }
 }
 
 let last = ''
@@ -79,7 +81,7 @@ export async function refreshLockScreen() {
   const mine = cur.set ? sets.filter((x) => x.exerciseId === cur.set!.exerciseId) : []
   const progress = { setsDone: mine.filter((x) => x.done).length, setsTotal: mine.length }
   const state: LockState = cur.set
-    ? { title: cur.exerciseName, text: setText(cur.set, sets), restEndAt, canStart: restEndAt > 0, canDone: true, ...progress }
+    ? { title: cur.exerciseName, text: setText(cur.set, sets, cur.measure), restEndAt, canStart: restEndAt > 0, canDone: true, ...progress }
     : { title: 'Wszystkie serie zrobione', text: 'Otwórz aplikację, żeby zakończyć trening', restEndAt: 0, canStart: false, canDone: false, setsDone: 0, setsTotal: 0 }
   const key = JSON.stringify(state)
   if (key === last) return

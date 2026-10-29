@@ -6,6 +6,8 @@ import type { MetricKey } from './lib/body'
 export type MuscleGroup = 'klatka' | 'plecy' | 'nogi' | 'barki' | 'ramiona' | 'brzuch' | 'inne'
 export type Equipment = 'sztanga' | 'hantle' | 'maszyna' | 'wyciąg' | 'masa ciała' | 'inne'
 export type SetType = 'rozgrzewka' | 'robocza' | 'drop'
+/** Sposób zapisu serii — szczegóły w `lib/measure.ts`. */
+export type Measure = 'ciężar' | 'czas' | 'cardio' | 'ciężar-dystans'
 
 export interface Exercise {
   id: number
@@ -17,6 +19,8 @@ export interface Exercise {
   note?: string
   /** Zdjęcie z biblioteki (slug) — dla własnych ćwiczeń; wbudowane mają zdjęcie po nazwie. */
   image?: string
+  /** Jak zapisywać serie (ciężar × powt., czas, dystans…). Brak = zgadnięte po nazwie. */
+  measure?: Measure
 }
 
 export interface Plan {
@@ -81,6 +85,8 @@ export interface WorkoutSet {
   reps: number
   /** Seria na czas (np. deska) — liczba sekund zamiast powtórzeń. */
   durationSec?: number
+  /** Seria na dystans (bieżnia, spacer farmera) — w metrach. */
+  distanceM?: number
   done: boolean
 }
 
