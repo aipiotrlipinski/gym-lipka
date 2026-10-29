@@ -4,6 +4,7 @@ import { navigate } from '../router'
 import { Badge, Button, ScreenTitle } from '../components/ui'
 import { ChevronIcon } from '../components/icons'
 import { ExerciseThumb } from '../components/ExercisePhoto'
+import { measureOf, measureShort } from '../lib/measure'
 import {
   MuscleChips,
   NewExerciseSheet,
@@ -56,7 +57,10 @@ export function Cwiczenia() {
                 <ExerciseThumb exercise={e} />
                 <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                   <span className="text-[15px] font-bold text-ink">{e.name}</span>
-                  <span className="text-xs text-muted">{equipmentLabel(e.equipment)}</span>
+                  <span className="text-xs text-muted">
+                    {equipmentLabel(e.equipment)}
+                    {measureOf(e) !== 'ciężar' ? ` · ${measureShort(measureOf(e))}` : ''}
+                  </span>
                 </div>
                 <div className="flex items-center gap-2 text-muted">
                   {e.custom && <Badge tone="soft">własne</Badge>}

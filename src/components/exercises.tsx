@@ -1,6 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useMemo, useState } from 'react'
-import { db, type Equipment, type Exercise, type MuscleGroup } from '../db'
+import { db, type Equipment, type Exercise, type Measure, type MuscleGroup } from '../db'
+import { MEASURES, guessMeasure, measureOf, measureShort } from '../lib/measure'
 import { Button, Sheet, TextField } from './ui'
 import { SearchIcon } from './icons'
 import { ExerciseThumb, ImagePickerSheet } from './ExercisePhoto'
@@ -126,6 +127,7 @@ export function ExercisePicker({
               <span className="text-[15px] font-bold text-ink">{e.name}</span>
               <span className="text-xs text-muted">
                 {muscleLabel(e.muscle)} · {equipmentLabel(e.equipment)}
+                {measureOf(e) !== 'ciężar' ? ` · ${measureShort(measureOf(e))}` : ''}
                 {e.custom ? ' · własne' : ''}
               </span>
             </span>
@@ -157,6 +159,9 @@ export function NewExerciseSheet({
   const [equipment, setEquipment] = useState<Equipment>(existing?.equipment ?? 'inne')
   const [note, setNote] = useState(existing?.note ?? '')
   const [image, setImage] = useState<string | undefined>(existing?.image)
+  // Dopóki nie wybierzesz ręcznie, sposób zapisu podąża za nazwą (np. „Bieżnia” → dystans i czas).
+  const [measurePicked, setMeasurePicked] = useState<Measure | undefined>(existing ? measureOf(existing) : undefined)
+  const measure = measurePicked ?? guessMeasure(name.trim())
   const [pickingImage, setPickingImage] = useState(false)
   const chip = (active: boolean) =>
     `h-9 rounded-full px-3 text-[13px] ${
@@ -164,7 +169,7 @@ export function NewExerciseSheet({
     }`
 
   const save = async () => {
-    const data = { name: name.trim(), muscle, equipment, note: note.trim() || undefined, image, custom: true }
+    const data = { name: name.trim(), muscle, equipment, measure, note: note.trim() || undefined, image, custom: true }
     if (!data.name) return
     if (existing) {
       await db.exercises.update(existing.id, data)
@@ -199,6 +204,17 @@ export function NewExerciseSheet({
               </button>
             ))}
           </div>
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <span className="text-[13px] font-bold text-muted">Zapis serii</span>
+          <div className="flex flex-wrap gap-2">
+            {MEASURES.map((m) => (
+              <button key={m.id} className={chip(measure === m.id)} onClick={() => setMeasurePicked(m.id)}>
+                {m.label}
+              </button>
+            ))}
+          </div>
+          <span className="text-xs text-muted">{MEASURES.find((m) => m.id === measure)?.hint}</span>
         </div>
         <div className="flex flex-col gap-1.5">
           <span className="text-[13px] font-bold text-muted">Zdjęcie (opcjonalnie)</span>

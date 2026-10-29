@@ -8,6 +8,7 @@ import { ChevronIcon, DownIcon, TrashIcon, UpIcon } from '../components/icons'
 import { ExercisePicker, useExercises } from '../components/exercises'
 import { ExerciseThumb } from '../components/ExercisePhoto'
 import { clock } from '../lib/format'
+import { measureOf } from '../lib/measure'
 import { linkedWithNext, removeAt, supersetLabel, swapAt } from '../lib/superset'
 
 function usePlans() {
@@ -278,6 +279,8 @@ export function DayEdit({ id }: { id: number }) {
                   Przerwa · {clock(e.restSec)}
                   <Stepper label="Przerwa w sekundach" value={e.restSec} step={15} min={0} suffix="s" onChange={(v) => setEx(i, { restSec: Math.round(v) })} />
                 </div>
+                {measureOf(ex) === 'ciężar' ? (
+                <>
                 <div className="flex flex-col gap-1 text-xs font-bold text-muted">
                   Powtórzenia od
                   <Stepper label="Powtórzenia od" value={e.repsMin} step={1} min={1} onChange={(v) => setEx(i, { repsMin: Math.round(v), repsMax: Math.max(Math.round(v), e.repsMax) })} />
@@ -286,6 +289,12 @@ export function DayEdit({ id }: { id: number }) {
                   do
                   <Stepper label="Powtórzenia do" value={e.repsMax} step={1} min={1} onChange={(v) => setEx(i, { repsMax: Math.round(v), repsMin: Math.min(Math.round(v), e.repsMin) })} />
                 </div>
+                </>
+                ) : (
+                  <p className="col-span-2 m-0 text-xs leading-snug text-muted">
+                    {{ czas: 'Czas serii', cardio: 'Dystans i czas', 'ciężar-dystans': 'Ciężar i dystans', ciężar: '' }[measureOf(ex)]} wpisujesz w treningu — podpowie się z ostatniego razu.
+                  </p>
+                )}
               </div>
             </Card>
             {i < day.exercises.length - 1 && (

@@ -1,5 +1,6 @@
 import type { Exercise, WorkoutItem, WorkoutSet } from '../db'
 import { kg } from './format'
+import { measureOf } from './measure'
 
 /**
  * Asystent progresji — metoda „podwójnej progresji”:
@@ -27,6 +28,8 @@ export function weightStep(e?: Exercise) {
 }
 
 export function suggest(e: Exercise | undefined, item: WorkoutItem | undefined, last: WorkoutSet[]): Suggestion | null {
+  // Podwójna progresja ma sens tylko przy ciężarze × powtórzeniach (nie przy desce czy bieżni).
+  if (measureOf(e) !== 'ciężar') return null
   const work = last.filter((s) => s.done && s.type === 'robocza' && s.reps > 0)
   if (work.length === 0) return null
   const repsMin = item?.repsMin ?? 8

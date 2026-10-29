@@ -1,5 +1,5 @@
-import type { Workout, WorkoutSet } from '../db'
-import { kg } from './format'
+import type { Measure, Workout, WorkoutSet } from '../db'
+import { kg, setLabelAs } from './format'
 import { afterSet } from './superset'
 
 /** Czysta logika powiadomienia na ekranie blokady (bez przeglądarki — testowalna). */
@@ -28,8 +28,10 @@ export function afterLockDone(workout: Workout, sets: WorkoutSet[], doneSetId: n
 }
 
 /** Tekst serii: „Seria 2 z 4 · 80 kg × 8”, „Rozgrzewka · 40 kg × 10”, „Seria 1 z 3 · 60 s”. */
-export function setText(set: WorkoutSet, all: WorkoutSet[]) {
-  const load = set.durationSec
+export function setText(set: WorkoutSet, all: WorkoutSet[], measure?: Measure) {
+  const load = measure
+    ? setLabelAs(measure, set, true)
+    : set.durationSec
     ? set.weightKg > 0
       ? `${kg(set.weightKg)} kg × ${set.durationSec} s`
       : `${set.durationSec} s`
