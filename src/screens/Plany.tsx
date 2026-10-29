@@ -1,15 +1,15 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useState } from 'react'
-import { db, type Plan, type PlanDay } from '../db'
+import { db, type Measure, type Plan, type PlanDay, type PlanExercise } from '../db'
 import { navigate } from '../router'
 import { nextPlanDay, startWorkout } from '../lib/workout'
 import { Badge, Button, Card, Confirm, Empty, RoundButton, ScreenTitle, SectionLabel, Stepper, SavedTextField, TopBar } from '../components/ui'
 import { ChevronIcon, DownIcon, TrashIcon, UpIcon } from '../components/icons'
 import { ExercisePicker, useExercises } from '../components/exercises'
 import { ExerciseThumb } from '../components/ExercisePhoto'
-import { clock, kg } from '../lib/format'
-import { lastWorkingWeight } from '../lib/stats'
-import { fieldsOf, measureOf, measureShort } from '../lib/measure'
+import { clock, kg, meters, secs } from '../lib/format'
+import { lastWorkingTargets } from '../lib/stats'
+import { defaultsFor, fieldsOf, measureOf, measureShort } from '../lib/measure'
 import { linkedWithNext, removeAt, supersetLabel, swapAt } from '../lib/superset'
 
 function usePlans() {
@@ -22,33 +22,79 @@ function usePlans() {
   }, [])
 }
 
-/** Obciążenie ćwiczenia w dniu planu (czyta świeży stan, więc szybkie stukanie −/+ niczego nie gubi). */
-async function setPlanWeight(dayId: number, index: number, weightKg: number) {
+type Targets = Pick<PlanExercise, 'weightKg' | 'durationSec' | 'distanceM'>
+
+/** Cel ćwiczenia w dniu planu: ciężar, czas, dystans (czyta świeży stan, więc szybkie stukanie −/+ niczego nie gubi). */
+async function setPlanTarget(dayId: number, index: number, patch: Targets) {
   await db.transaction('rw', db.planDays, async () => {
     const day = await db.planDays.get(dayId)
     if (!day) return
-    await db.planDays.update(dayId, { exercises: day.exercises.map((e, j) => (j === index ? { ...e, weightKg } : e)) })
+    await db.planDays.update(dayId, { exercises: day.exercises.map((e, j) => (j === index ? { ...e, ...patch } : e)) })
   })
 }
 
-/** Ciężary z ostatniego treningu — podpowiedź, gdy w planie nie wpisano obciążenia. */
-function useLastWeights(ids: number[]) {
+/** Ciężar, czas i dystans z ostatniego treningu — podpowiedź, gdy w planie nic nie wpisano. */
+function useLastTargets(ids: number[]) {
   const key = [...new Set(ids)].sort((a, b) => a - b).join(',')
   return useLiveQuery(async () => {
-    const map = new Map<number, number>()
-    for (const id of key ? key.split(',').map(Number) : []) {
-      const w = await lastWorkingWeight(id)
-      if (w !== undefined) map.set(id, w)
-    }
+    const map = new Map<number, Targets>()
+    for (const id of key ? key.split(',').map(Number) : []) map.set(id, await lastWorkingTargets(id))
     return map
   }, [key])
 }
 
-/** Obciążenie w kg z przyciskami −/+ (krok 2,5 kg). */
-export function PlanWeight({ value, name, onChange }: { value: number; name: string; onChange: (v: number) => void }) {
-  return (
-    <Stepper compact accent label={`Obciążenie: ${name}`} value={value} step={2.5} decimal suffix="kg" onChange={(v) => onChange(Math.round(v * 100) / 100)} />
-  )
+interface TargetField {
+  key: keyof Targets
+  label: string
+  /** Wartość w jednostce pola (kg, s, min, m). */
+  value: number
+  step: number
+  decimal?: boolean
+  suffix: string
+  /** „ostatnio …”, gdy w planie nic nie wpisano, a jest poprzedni trening. */
+  hint?: string
+  /** Wartość z pola → zapis w planie. */
+  save: (v: number) => Targets
+}
+
+/** Pola celu w planie według sposobu zapisu ćwiczenia: ciężar, czas, dystans. */
+function targetFields(m: Measure, e: Targets, last: Targets | undefined): TargetField[] {
+  const f = fieldsOf(m)
+  const d = defaultsFor(m)
+  const out: TargetField[] = []
+  if (f.weight) {
+    out.push({
+      key: 'weightKg',
+      label: 'Obciążenie',
+      value: e.weightKg ?? last?.weightKg ?? 0,
+      step: 2.5,
+      decimal: true,
+      suffix: 'kg',
+      hint: e.weightKg === undefined && last?.weightKg !== undefined ? `${kg(last.weightKg)} kg` : undefined,
+      save: (v) => ({ weightKg: Math.round(v * 100) / 100 }),
+    })
+  }
+  if (f.duration) {
+    const sec = e.durationSec ?? last?.durationSec ?? d.durationSec ?? 0
+    const hint = e.durationSec === undefined && last?.durationSec ? secs(last.durationSec) : undefined
+    out.push(
+      m === 'cardio'
+        ? { key: 'durationSec', label: 'Czas', value: Math.round((sec / 60) * 10) / 10, step: 1, decimal: true, suffix: 'min', hint, save: (v) => ({ durationSec: Math.round(v * 60) }) }
+        : { key: 'durationSec', label: 'Czas', value: sec, step: 5, suffix: 's', hint, save: (v) => ({ durationSec: Math.round(v) }) },
+    )
+  }
+  if (f.distance) {
+    out.push({
+      key: 'distanceM',
+      label: 'Dystans',
+      value: e.distanceM ?? last?.distanceM ?? d.distanceM ?? 0,
+      step: m === 'cardio' ? 100 : 10,
+      suffix: 'm',
+      hint: e.distanceM === undefined && last?.distanceM ? meters(last.distanceM) : undefined,
+      save: (v) => ({ distanceM: Math.round(v) }),
+    })
+  }
+  return out
 }
 
 async function createPlan() {
@@ -63,7 +109,7 @@ export function Plany() {
   const next = useLiveQuery(() => nextPlanDay(), [])
   const exercises = useExercises()
   const nameOf = (id: number) => exercises.find((e) => e.id === id)?.name ?? '?'
-  const lastW = useLastWeights(data?.filter((p) => p.plan.active).flatMap((p) => p.days.flatMap((d) => d.exercises.map((e) => e.exerciseId))) ?? [])
+  const lastT = useLastTargets(data?.filter((p) => p.plan.active).flatMap((p) => p.days.flatMap((d) => d.exercises.map((e) => e.exerciseId))) ?? [])
 
   return (
     <div className="pb-6">
@@ -96,7 +142,7 @@ export function Plany() {
             {plan.active ? <Badge tone="accent">AKTYWNY</Badge> : <ChevronIcon />}
           </button>
           {plan.active && days.some((d) => d.exercises.length > 0) && (
-            <span className="text-[12px] text-muted">Obciążenie wpisujesz tutaj — trening zacznie od tych ciężarów.</span>
+            <span className="text-[12px] text-muted">Obciążenie, czas i dystans wpisujesz tutaj — trening zacznie od tych wartości.</span>
           )}
           {plan.active &&
             days.map((d) => {
@@ -126,8 +172,9 @@ export function Plany() {
                     <div className="flex flex-col gap-1.5 px-2 pb-2">
                       {d.exercises.map((e, i) => {
                         const nm = nameOf(e.exerciseId)
-                        const hint = lastW?.get(e.exerciseId)
                         const ms = measureOf(exercises.find((x) => x.id === e.exerciseId))
+                        const fields = targetFields(ms, e, lastT?.get(e.exerciseId))
+                        const hints = fields.filter((f) => f.hint).map((f) => f.hint)
                         return (
                           <div key={`${e.exerciseId}-${i}`} className="flex items-center gap-2 rounded-xl bg-card py-1 pl-3 pr-1">
                             <div className="flex min-w-0 flex-1 flex-col">
@@ -136,12 +183,24 @@ export function Plany() {
                                 {ms === 'ciężar'
                                   ? `${e.sets} × ${e.repsMin === e.repsMax ? e.repsMin : `${e.repsMin}–${e.repsMax}`}`
                                   : `${e.sets} ${e.sets === 1 ? 'seria' : 'serie'} · ${measureShort(ms)}`}
-                                {fieldsOf(ms).weight && e.weightKg === undefined && hint !== undefined ? ` · ostatnio ${kg(hint)} kg` : ''}
+                                {hints.length ? ` · ostatnio ${hints.join(' · ')}` : ''}
                               </span>
                             </div>
-                            {fieldsOf(ms).weight && (
-                              <div className="w-[132px] shrink-0">
-                                <PlanWeight value={e.weightKg ?? hint ?? 0} name={nm} onChange={(v) => setPlanWeight(d.id, i, v)} />
+                            {fields.length > 0 && (
+                              <div className="flex w-[132px] shrink-0 flex-col gap-1 py-0.5">
+                                {fields.map((f) => (
+                                  <Stepper
+                                    key={f.key}
+                                    compact
+                                    accent
+                                    label={`${f.label}: ${nm}`}
+                                    value={f.value}
+                                    step={f.step}
+                                    decimal={f.decimal}
+                                    suffix={f.suffix}
+                                    onChange={(v) => setPlanTarget(d.id, i, f.save(v))}
+                                  />
+                                ))}
                               </div>
                             )}
                           </div>
@@ -260,7 +319,7 @@ export function PlanEdit({ id }: { id: number }) {
 export function DayEdit({ id }: { id: number }) {
   const day = useLiveQuery(() => db.planDays.get(id), [id])
   const exercises = useExercises()
-  const lastW = useLastWeights(day?.exercises.map((e) => e.exerciseId) ?? [])
+  const lastT = useLastTargets(day?.exercises.map((e) => e.exerciseId) ?? [])
   const [picker, setPicker] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
 
@@ -328,21 +387,21 @@ export function DayEdit({ id }: { id: number }) {
                 </RoundButton>
               </div>
               <div className="grid grid-cols-2 gap-2">
-                {fieldsOf(measureOf(ex)).weight && (
-                <div className="col-span-2 flex flex-col gap-1 text-xs font-bold text-accent">
-                  Obciążenie
-                  {e.weightKg === undefined && lastW?.get(e.exerciseId) !== undefined ? ` · ostatnio ${kg(lastW.get(e.exerciseId)!)} kg` : ''}
-                  <Stepper
-                    accent
-                    label="Obciążenie"
-                    value={e.weightKg ?? lastW?.get(e.exerciseId) ?? 0}
-                    step={2.5}
-                    decimal
-                    suffix="kg"
-                    onChange={(v) => setPlanWeight(id, i, Math.round(v * 100) / 100)}
-                  />
-                </div>
-                )}
+                {targetFields(measureOf(ex), e, lastT?.get(e.exerciseId)).map((f) => (
+                  <div key={f.key} className="col-span-2 flex flex-col gap-1 text-xs font-bold text-accent">
+                    {f.label}
+                    {f.hint ? ` · ostatnio ${f.hint}` : ''}
+                    <Stepper
+                      accent
+                      label={f.label}
+                      value={f.value}
+                      step={f.step}
+                      decimal={f.decimal}
+                      suffix={f.suffix}
+                      onChange={(v) => setPlanTarget(id, i, f.save(v))}
+                    />
+                  </div>
+                ))}
                 <div className="flex flex-col gap-1 text-xs font-bold text-muted">
                   Serie
                   <Stepper label="Serie" value={e.sets} step={1} min={1} onChange={(v) => setEx(i, { sets: Math.round(v) })} />
@@ -362,11 +421,7 @@ export function DayEdit({ id }: { id: number }) {
                   <Stepper label="Powtórzenia do" value={e.repsMax} step={1} min={1} onChange={(v) => setEx(i, { repsMax: Math.round(v), repsMin: Math.min(Math.round(v), e.repsMin) })} />
                 </div>
                 </>
-                ) : (
-                  <p className="col-span-2 m-0 text-xs leading-snug text-muted">
-                    {{ czas: 'Czas serii', cardio: 'Dystans i czas', 'ciężar-dystans': 'Ciężar i dystans', ciężar: '' }[measureOf(ex)]} wpisujesz w treningu — podpowie się z ostatniego razu.
-                  </p>
-                )}
+                ) : null}
               </div>
             </Card>
             {i < day.exercises.length - 1 && (

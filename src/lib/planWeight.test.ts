@@ -44,4 +44,31 @@ describe('obciążenie w planie', () => {
     const next = await setsOf(await startWorkout(dayId))
     expect(next.filter((s) => s.exerciseId === exA).every((s) => s.weightKg === 62.5)).toBe(true)
   })
+
+  it('czas i dystans z planu: start treningu i aktualizacja po treningu', async () => {
+    const run = (await db.exercises.where('name').equals('Bieżnia').first())!.id
+    const plank = (await db.exercises.where('name').equals('Deska (plank)').first())!.id
+    const day = (await db.planDays.get(dayId))!
+    await db.planDays.update(dayId, {
+      exercises: [
+        ...day.exercises,
+        { exerciseId: run, sets: 1, repsMin: 8, repsMax: 12, restSec: 60, durationSec: 25 * 60, distanceM: 4000 },
+        { exerciseId: plank, sets: 2, repsMin: 8, repsMax: 12, restSec: 60, durationSec: 45 },
+      ],
+    })
+    const wid = await startWorkout(dayId)
+    const sets = await setsOf(wid)
+    expect(sets.filter((s) => s.exerciseId === run).map((s) => [s.durationSec, s.distanceM])).toEqual([[1500, 4000]])
+    expect(sets.filter((s) => s.exerciseId === plank).map((s) => s.durationSec)).toEqual([45, 45])
+    for (const s of sets) {
+      const patch = s.exerciseId === run ? { durationSec: 1800, distanceM: 5000 } : s.exerciseId === plank ? { durationSec: s.order === 1 ? 60 : 45 } : {}
+      await db.sets.update(s.id, { done: true, ...patch })
+    }
+    await finishWorkout(wid)
+    const after = (await db.planDays.get(dayId))!.exercises
+    const r = after.find((e) => e.exerciseId === run)!
+    const p = after.find((e) => e.exerciseId === plank)!
+    expect([r.durationSec, r.distanceM, r.weightKg]).toEqual([1800, 5000, undefined])
+    expect([p.durationSec, p.weightKg]).toEqual([60, undefined])
+  })
 })

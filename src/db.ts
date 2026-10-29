@@ -38,6 +38,10 @@ export interface PlanExercise {
   restSec: number
   /** Obciążenie serii roboczych w kg; brak = ciężar z ostatniego treningu. Aktualizuje się po treningu. */
   weightKg?: number
+  /** Czas serii w sekundach (deska, bieżnia…); brak = czas z ostatniego treningu. Aktualizuje się po treningu. */
+  durationSec?: number
+  /** Dystans serii w metrach (bieżnia, spacer farmera…); brak = dystans z ostatniego treningu. Aktualizuje się po treningu. */
+  distanceM?: number
   /** Superseria: to ćwiczenie jest połączone z następnym (bez przerwy między nimi). */
   superset?: boolean
 }

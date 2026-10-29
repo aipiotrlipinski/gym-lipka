@@ -23,6 +23,21 @@ export async function lastWorkingWeight(exerciseId: number): Promise<number | un
   return work.length ? Math.max(...work.map((s) => s.weightKg)) : undefined
 }
 
+/** Cele z ostatniego treningu (najlepsza seria robocza): ciężar, czas i dystans — podpowiedź do planu. */
+export async function lastWorkingTargets(exerciseId: number): Promise<{ weightKg?: number; durationSec?: number; distanceM?: number }> {
+  const work = (await lastSessionSets(exerciseId)).filter((s) => s.type !== 'rozgrzewka')
+  if (!work.length) return {}
+  const top = (xs: (number | undefined)[]) => {
+    const v = xs.filter((x): x is number => x !== undefined && x > 0)
+    return v.length ? Math.max(...v) : undefined
+  }
+  return {
+    weightKg: Math.max(...work.map((s) => s.weightKg)),
+    durationSec: top(work.map((s) => s.durationSec)),
+    distanceM: top(work.map((s) => s.distanceM)),
+  }
+}
+
 export interface Bests {
   maxWeight: number
   maxWeightReps: number

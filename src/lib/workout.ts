@@ -47,9 +47,12 @@ function valuesFrom(src: WorkoutSet | undefined, m: ReturnType<typeof measureOf>
  * Serie startowe dla ćwiczenia: rozgrzewki i ciężary z ostatniego razu, liczba serii roboczych z planu.
  * Gdy plan ma wpisane obciążenie, serie robocze startują z niego.
  */
-async function initialSets(workoutId: number, exerciseId: number, workingSets: number, repsMin: number, planWeightKg?: number) {
+type PlanTargets = { weightKg?: number; durationSec?: number; distanceM?: number }
+
+async function initialSets(workoutId: number, exerciseId: number, workingSets: number, repsMin: number, plan: PlanTargets = {}) {
   const last = await lastSessionSets(exerciseId, workoutId)
   const m = measureOf(await db.exercises.get(exerciseId))
+  const f = fieldsOf(m)
   const warm = last.filter((s) => s.type === 'rozgrzewka')
   const work = last.filter((s) => s.type !== 'rozgrzewka')
   const rows: Omit<WorkoutSet, 'id'>[] = []
@@ -63,8 +66,10 @@ async function initialSets(workoutId: number, exerciseId: number, workingSets: n
       type: src?.type === 'drop' ? 'drop' : 'robocza',
       // Ciężar, powtórzenia, czas i dystans z ostatniego razu — tylko pola pasujące do sposobu zapisu.
       ...valuesFrom(src, m, repsMin),
-      // Obciążenie wpisane w planie ma pierwszeństwo (tylko gdy ćwiczenie ma ciężar).
-      ...(planWeightKg !== undefined && fieldsOf(m).weight ? { weightKg: planWeightKg } : {}),
+      // Obciążenie, czas i dystans wpisane w planie mają pierwszeństwo (tylko pola pasujące do sposobu zapisu).
+      ...(plan.weightKg !== undefined && f.weight ? { weightKg: plan.weightKg } : {}),
+      ...(plan.durationSec && f.duration ? { durationSec: plan.durationSec } : {}),
+      ...(plan.distanceM !== undefined && f.distance ? { distanceM: plan.distanceM } : {}),
       done: false,
     })
   }
@@ -92,7 +97,7 @@ export async function startWorkout(planDayId?: number): Promise<number> {
       items,
     } as Workout)
     for (const e of day?.exercises ?? []) {
-      await db.sets.bulkAdd((await initialSets(id, e.exerciseId, e.sets, e.repsMin, e.weightKg)) as WorkoutSet[])
+      await db.sets.bulkAdd((await initialSets(id, e.exerciseId, e.sets, e.repsMin, e)) as WorkoutSet[])
     }
     return id
   })
@@ -168,7 +173,7 @@ export function cycleType(t: SetType): SetType {
 
 /** Kończy trening: niewykonane serie są usuwane, puste ćwiczenia znikają z listy. Obciążenia w planie dostają ciężary z tego treningu. */
 export async function finishWorkout(workoutId: number) {
-  await db.transaction('rw', db.workouts, db.sets, db.planDays, async () => {
+  await db.transaction('rw', db.workouts, db.sets, db.planDays, db.exercises, async () => {
     const sets = await setsOf(workoutId)
     await db.sets.bulkDelete(sets.filter((s) => !s.done).map((s) => s.id))
     const left = new Set(sets.filter((s) => s.done).map((s) => s.exerciseId))
@@ -180,16 +185,21 @@ export async function finishWorkout(workoutId: number) {
     })
     const day = w?.planDayId !== undefined ? await db.planDays.get(w.planDayId) : undefined
     if (day) {
-      const top = new Map<number, number>()
+      // Najlepsza seria robocza każdego ćwiczenia: ciężar, czas i dystans — tylko pola pasujące do sposobu zapisu.
+      const top = new Map<number, PlanTargets>()
+      const fields = new Map<number, ReturnType<typeof fieldsOf>>()
       for (const s of sets) {
         if (!s.done || s.type === 'rozgrzewka') continue
-        top.set(s.exerciseId, Math.max(top.get(s.exerciseId) ?? 0, s.weightKg))
+        if (!fields.has(s.exerciseId)) fields.set(s.exerciseId, fieldsOf(measureOf(await db.exercises.get(s.exerciseId))))
+        const f = fields.get(s.exerciseId)!
+        const t = top.get(s.exerciseId) ?? {}
+        if (f.weight) t.weightKg = Math.max(t.weightKg ?? 0, s.weightKg)
+        if (f.duration && s.durationSec) t.durationSec = Math.max(t.durationSec ?? 0, s.durationSec)
+        if (f.distance && s.distanceM) t.distanceM = Math.max(t.distanceM ?? 0, s.distanceM)
+        top.set(s.exerciseId, t)
       }
-      if ([...top.keys()].some((id) => day.exercises.some((e) => e.exerciseId === id && e.weightKg !== top.get(id)))) {
-        await db.planDays.update(day.id, {
-          exercises: day.exercises.map((e) => (top.has(e.exerciseId) ? { ...e, weightKg: top.get(e.exerciseId) } : e)),
-        })
-      }
+      const next = day.exercises.map((e) => (top.has(e.exerciseId) ? { ...e, ...top.get(e.exerciseId) } : e))
+      if (JSON.stringify(next) !== JSON.stringify(day.exercises)) await db.planDays.update(day.id, { exercises: next })
     }
   })
 }
