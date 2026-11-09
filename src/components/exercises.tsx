@@ -46,7 +46,7 @@ export function useFilteredExercises(query: string, muscle: MuscleGroup | null) 
 
 export function SearchBox({ value, onChange, autoFocus }: { value: string; onChange: (v: string) => void; autoFocus?: boolean }) {
   return (
-    <label className="mx-5 flex h-[52px] items-center gap-2.5 rounded-2xl border border-line bg-card px-4 text-muted">
+    <label className="mx-4 flex h-[52px] items-center gap-2.5 rounded-2xl border border-line bg-card px-4 text-muted">
       <SearchIcon />
       <input
         value={value}
@@ -66,7 +66,7 @@ export function MuscleChips({ value, onChange }: { value: MuscleGroup | null; on
       active ? 'border-transparent bg-accent font-extrabold text-on-accent' : 'border border-line bg-card font-bold text-ink'
     }`
   return (
-    <div className="flex gap-2 overflow-x-auto px-5 pb-1 pt-3" style={{ scrollbarWidth: 'none' }}>
+    <div className="flex gap-2 overflow-x-auto px-4 pb-1 pt-3" style={{ scrollbarWidth: 'none' }}>
       <button className={chip(value === null)} onClick={() => onChange(null)}>
         Wszystkie
       </button>
@@ -112,7 +112,7 @@ export function ExercisePicker({
     <Sheet title={title} onClose={onClose}>
       <SearchBox value={q} onChange={setQ} />
       <MuscleChips value={muscle} onChange={setMuscle} />
-      <div className="mx-5 mt-3 flex flex-col">
+      <div className="mx-4 mt-3 flex flex-col">
         {list.map((e) => (
           <button
             key={e.id}
@@ -183,7 +183,7 @@ export function NewExerciseSheet({
 
   return (
     <Sheet title={existing ? 'Edytuj ćwiczenie' : 'Nowe ćwiczenie'} onClose={onClose}>
-      <div className="flex flex-col gap-4 px-5 pb-2">
+      <div className="flex flex-col gap-4 px-4 pb-2">
         <TextField label="Nazwa" value={name} onChange={setName} autoFocus={!existing} placeholder="np. Wyciskanie na maszynie Hammer" />
         <div className="flex flex-col gap-1.5">
           <span className="text-[13px] font-bold text-muted">Partia mięśniowa</span>

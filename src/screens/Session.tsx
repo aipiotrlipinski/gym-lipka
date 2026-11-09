@@ -38,9 +38,9 @@ export function Session({ id, fresh = false }: { id: number; fresh?: boolean }) 
   return (
     <div className="pb-8">
       {fresh ? (
-        <div className="px-5 pb-2 pt-8">
-          <span className="text-[13px] font-bold tracking-wide text-accent">TRENING ZAPISANY</span>
-          <h1 className="m-0 mt-1 text-[30px] font-extrabold tracking-tight">Dobra robota!</h1>
+        <div className="px-4 pb-2 pt-8">
+          <span className="label text-[11px] font-bold text-accent">TRENING ZAPISANY</span>
+          <h1 className="head m-0 mt-1 text-[30px] font-extrabold">Dobra robota!</h1>
           <p className="m-0 mt-1 text-sm text-muted">
             {workout.name} · {longDate(workout.startedAt)}
           </p>
@@ -48,11 +48,11 @@ export function Session({ id, fresh = false }: { id: number; fresh?: boolean }) 
       ) : (
         <>
           <TopBar fallback={{ name: 'historia' }}>{longDate(workout.startedAt)}</TopBar>
-          <h1 className="m-0 px-5 pt-2 text-[28px] font-extrabold tracking-tight">{workout.name}</h1>
+          <h1 className="head m-0 px-4 pt-2 text-[26px] font-extrabold">{workout.name}</h1>
         </>
       )}
 
-      <div className="mx-5 mt-4 grid grid-cols-2 gap-2">
+      <div className="mx-4 mt-3 grid grid-cols-2 gap-2">
         {stats.map((s) => (
           <Card key={s.label} className="flex flex-col gap-1 !rounded-[18px] p-3">
             <span className="text-[11px] text-muted">{s.label}</span>
@@ -63,7 +63,7 @@ export function Session({ id, fresh = false }: { id: number; fresh?: boolean }) 
       {kcal === undefined && workout.endedAt && body && body.length === 0 && (
         <button
           onClick={() => navigate({ name: 'historia' })}
-          className="mx-5 mt-2 w-[calc(100%-2.5rem)] rounded-2xl border-0 bg-soft px-4 py-3 text-left text-[13px] text-muted"
+          className="mx-4 mt-2 w-[calc(100%-2.5rem)] rounded-2xl border-0 bg-soft px-4 py-3 text-left text-[13px] text-muted"
         >
           Żeby policzyć kalorie, wpisz masę ciała w Historii → Masa ciała.
         </button>
@@ -72,7 +72,7 @@ export function Session({ id, fresh = false }: { id: number; fresh?: boolean }) 
       {prs && prs.length > 0 && (
         <>
           <SectionLabel>REKORDY · {prs.length}</SectionLabel>
-          <Card className="mx-5 flex flex-col p-1.5">
+          <Card className="mx-4 flex flex-col p-1.5">
             {prs.map((p) => (
               <button
                 key={p.exerciseId}
@@ -91,11 +91,11 @@ export function Session({ id, fresh = false }: { id: number; fresh?: boolean }) 
       )}
 
       {workout.note && (
-        <p className="mx-5 mt-4 rounded-2xl bg-soft px-4 py-3 text-sm text-ink">Notatka: {workout.note}</p>
+        <p className="mx-4 mt-3 rounded-2xl bg-soft px-4 py-3 text-sm text-ink">Notatka: {workout.note}</p>
       )}
 
       <SectionLabel>ĆWICZENIA</SectionLabel>
-      <div className="mx-5 flex flex-col gap-2">
+      <div className="mx-4 flex flex-col gap-2">
         {workout.items.map((it, j) => {
           const lbl = supersetLabel(workout.items, j)
           const ss = done.filter((s) => s.exerciseId === it.exerciseId)
@@ -104,13 +104,13 @@ export function Session({ id, fresh = false }: { id: number; fresh?: boolean }) 
             <button
               key={it.exerciseId}
               onClick={() => navigate({ name: 'cwiczenie', id: it.exerciseId })}
-              className="flex flex-col gap-1.5 rounded-[20px] border border-solid border-line bg-card px-4 py-3 text-left"
+              className="flex flex-col gap-1.5 rounded-card border border-solid border-line bg-card px-4 py-3 text-left"
             >
               <span className="text-[15px] font-extrabold text-ink">
                 {lbl && <span className="text-accent">{lbl} </span>}
                 {name(it.exerciseId)}
               </span>
-              <span className="text-[13px] tabular-nums text-muted">
+              <span className="text-[13px] font-num tabular-nums text-muted">
                 {ss.map((s) => (s.type === 'rozgrzewka' ? `(${setLabel(s.weightKg, s.reps, s.durationSec, s.distanceM)})` : setLabel(s.weightKg, s.reps, s.durationSec, s.distanceM))).join('  ·  ')}
               </span>
               {it.note && <span className="text-xs text-muted">💬 {it.note}</span>}
@@ -119,7 +119,7 @@ export function Session({ id, fresh = false }: { id: number; fresh?: boolean }) 
         })}
       </div>
 
-      <div className="mx-5 mt-6 flex flex-col gap-2">
+      <div className="mx-4 mt-6 flex flex-col gap-2">
         {fresh ? (
           <Button size="lg" onClick={() => navigate({ name: 'start' }, true)}>
             Gotowe

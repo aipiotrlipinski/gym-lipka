@@ -32,6 +32,113 @@
   color-scheme: dark;
 }
 
+/*
+ * Wygląd całej aplikacji poza kolorami: czcionka nagłówków i liczb, wielkie litery w tytułach, zaokrąglenia.
+ * Standard i różowe kolorystyki: Manrope. Volt: Space Grotesk, tytuły wielkimi literami.
+ * Instrument: liczby i etykiety w JetBrains Mono, mniejsze zaokrąglenia.
+ */
+:root {
+  --f-head: 'Manrope Variable', system-ui, sans-serif;
+  --f-num: 'Manrope Variable', system-ui, sans-serif;
+  --f-label: 'Manrope Variable', system-ui, sans-serif;
+  --head-case: none;
+  --head-track: -0.02em;
+  --r-card: 20px;
+  --r-btn: 14px;
+  --map: var(--accent);
+}
+
+/* Volt — czerń + limonka (ciemny), w jasnym motywie: biel + czerń z limonkowymi napisami na przyciskach. */
+:root[data-palette='volt'] {
+  --bg: #f3f3ef;
+  --card: #ffffff;
+  --row: #ecece7;
+  --soft: #e4e4de;
+  --line: #e2e2dc;
+  --ink: #0b0b0c;
+  --muted: #5a5a55;
+  --accent: #0b0b0c;
+  --on-accent: #d7ff3d;
+  --pr-bg: #0b0b0c;
+  --pr-ink: #d7ff3d;
+  --map: #8fb400;
+  --f-head: 'Space Grotesk Variable', system-ui, sans-serif;
+  --f-num: 'Space Grotesk Variable', system-ui, sans-serif;
+  --head-case: uppercase;
+  --head-track: -0.03em;
+  --r-card: 22px;
+  --r-btn: 16px;
+}
+:root[data-palette='volt'][data-theme='dark'] {
+  --bg: #0b0b0c;
+  --card: #151517;
+  --row: #1c1c1f;
+  --soft: #2a2a2e;
+  --line: #232326;
+  --ink: #f2f2f0;
+  --muted: #8e8e89;
+  --accent: #d7ff3d;
+  --on-accent: #0b0b0c;
+  --pr-bg: #d7ff3d;
+  --pr-ink: #0b0b0c;
+  --map: #d7ff3d;
+}
+
+/* Instrument — ciemny panel danych z niebieskim akcentem; jasny w stylu GitHuba. */
+:root[data-palette='instrument'] {
+  --bg: #f6f8fa;
+  --card: #ffffff;
+  --row: #f0f3f6;
+  --soft: #e6eaef;
+  --line: #d8dee4;
+  --ink: #1f2328;
+  --muted: #59636e;
+  --accent: #0969da;
+  --on-accent: #ffffff;
+  --pr-bg: #fff1d6;
+  --pr-ink: #7d4e00;
+  --map: #0969da;
+  --f-num: 'JetBrains Mono Variable', ui-monospace, monospace;
+  --f-label: 'JetBrains Mono Variable', ui-monospace, monospace;
+  --head-track: -0.01em;
+  --r-card: 14px;
+  --r-btn: 10px;
+}
+:root[data-palette='instrument'][data-theme='dark'] {
+  --bg: #0d1117;
+  --card: #161b22;
+  --row: #0d1117;
+  --soft: #262c36;
+  --line: #262c36;
+  --ink: #e6edf3;
+  --muted: #8b949e;
+  --accent: #6cb4ff;
+  --on-accent: #0d1117;
+  --pr-bg: #3a2a0b;
+  --pr-ink: #f0b95a;
+  --map: #6cb4ff;
+}
+
+/* Volt: dolny pasek jako pływająca pigułka. */
+:root[data-palette='volt'] .tabbar {
+  margin: 0 12px max(12px, env(safe-area-inset-bottom));
+  padding-bottom: 6px !important;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+}
+
+/* Etykiety sekcji: w Instrumencie mono, w Volcie z rozstrzeleniem. */
+.label {
+  font-family: var(--f-label);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.head {
+  font-family: var(--f-head);
+  text-transform: var(--head-case);
+  letter-spacing: var(--head-track);
+}
+
 /* Wersja damska — 5 różowych kolorystyk (Ustawienia → Kolorystyka). Każda ma wariant jasny i ciemny. */
 :root[data-palette='puder'] {
   --bg: #fbf6f5;
@@ -163,6 +270,10 @@
   --color-pr-bg: var(--pr-bg);
   --color-pr-ink: var(--pr-ink);
   --font-sans: 'Manrope Variable', system-ui, sans-serif;
+  --font-head: var(--f-head);
+  --font-num: var(--f-num);
+  --radius-card: var(--r-card);
+  --radius-btn: var(--r-btn);
 }
 
 html,

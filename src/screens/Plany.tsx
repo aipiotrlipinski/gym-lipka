@@ -128,7 +128,7 @@ export function Plany() {
       )}
 
       {data?.map(({ plan, days }) => (
-        <Card key={plan.id} className="mx-5 mt-3 flex flex-col gap-2.5 p-4">
+        <Card key={plan.id} className="mx-4 mt-3 flex flex-col gap-2.5 p-4">
           <button
             onClick={() => navigate({ name: 'plan', id: plan.id })}
             className="flex items-center justify-between gap-3 border-0 bg-transparent p-0 text-left"
@@ -257,10 +257,10 @@ export function PlanEdit({ id }: { id: number }) {
   return (
     <div className="pb-8">
       <TopBar fallback={{ name: 'plany' }}>Plan</TopBar>
-      <div className="px-5 pt-2">
+      <div className="px-4 pt-2">
         <SavedTextField key={id} label="Nazwa planu" value={plan.name} onSave={(v) => db.plans.update(id, { name: v })} />
       </div>
-      <div className="mx-5 mt-3">
+      <div className="mx-4 mt-3">
         {plan.active ? (
           <p className="m-0 text-sm text-muted">To jest aktywny plan — ekran Start podpowiada z niego następny dzień.</p>
         ) : (
@@ -271,7 +271,7 @@ export function PlanEdit({ id }: { id: number }) {
       </div>
 
       <SectionLabel>DNI W ROTACJI</SectionLabel>
-      <div className="mx-5 flex flex-col gap-2">
+      <div className="mx-4 flex flex-col gap-2">
         {days.map((d, i) => (
           <Card key={d.id} className="flex items-center gap-2 p-2 pl-4">
             <button
@@ -296,7 +296,7 @@ export function PlanEdit({ id }: { id: number }) {
         </Button>
       </div>
 
-      <div className="mx-5 mt-8">
+      <div className="mx-4 mt-8">
         <Button variant="danger" onClick={() => setConfirmDelete(true)} className="w-full">
           Usuń plan
         </Button>
@@ -352,12 +352,12 @@ export function DayEdit({ id }: { id: number }) {
   return (
     <div className="pb-8">
       <TopBar fallback={{ name: 'plan', id: day.planId }}>Dzień planu</TopBar>
-      <div className="px-5 pt-2">
+      <div className="px-4 pt-2">
         <SavedTextField key={id} label="Nazwa dnia" value={day.name} onSave={(v) => save({ name: v })} />
       </div>
 
       <SectionLabel>ĆWICZENIA · {day.exercises.length}</SectionLabel>
-      <div className="mx-5 flex flex-col gap-1">
+      <div className="mx-4 flex flex-col gap-1">
         {day.exercises.some((e) => e.superset) && (
           <p className="m-0 text-[13px] leading-snug text-muted">
             W superserii robisz serię każdego ćwiczenia po kolei, przerwa dopiero po całej rundzie (czas przerwy z ostatniego ćwiczenia).
@@ -443,7 +443,7 @@ export function DayEdit({ id }: { id: number }) {
         </Button>
       </div>
 
-      <div className="mx-5 mt-6 flex flex-col gap-2">
+      <div className="mx-4 mt-6 flex flex-col gap-2">
         <Button size="lg" onClick={start} disabled={day.exercises.length === 0}>
           Rozpocznij ten trening
         </Button>

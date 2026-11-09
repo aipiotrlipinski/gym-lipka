@@ -10,6 +10,8 @@ Każdy push do gałęzi `silka` buduje nowe APK pod tym samym adresem.
 
 ## Co nowego
 
+- Nowy wygląd: wszystko ciaśniejsze (mniejsze odstępy, niższe przyciski i dolny pasek). Start: nazwa treningu duża, pod nią ćwiczenia w dwóch kolumnach, przycisk „Rozpocznij trening” z kwadratowym „+” na pusty trening, a tydzień i ostatni trening jako dwa kafle obok siebie.
+- Dwie nowe kolorystyki (Ustawienia → Kolorystyka): **Volt** — czerń z limonką, tytuły wielkimi literami (Space Grotesk), dolny pasek jako pływająca pigułka; **Instrument** — panel danych z niebieskim akcentem, liczby i etykiety czcionką mono (JetBrains Mono). Obie mają wariant ciemny i jasny, własną ikonę aplikacji i własne kolory na mapie mięśni.
 - Mięśnie (nowa zakładka): sylwetka z przodu i z tyłu, kolor mięśnia według liczby serii w ostatnich 7 albo 30 dniach. Stuknięcie w mięsień przybliża tę część ciała i pokazuje ćwiczenia — osobno te, gdzie pracuje głównie i pomocniczo, z ostatnim wynikiem. Przypisanie ćwiczeń do mięśni: `src/data/muscles.ts`, rysunek: `src/components/bodyShapes.ts`.
 - Komentarz do ćwiczenia: pod seriami „💬 Dodaj komentarz na następny raz” (po ostatniej serii ćwiczenia aplikacja sama o to zapyta). Przy następnym treningu z tym ćwiczeniem komentarz wyświetla się nad seriami; widać go też w historii ćwiczenia.
 - Pierwsze uruchomienie pyta o imię — na Start „Cześć, imię” (zmiana w Ustawieniach).

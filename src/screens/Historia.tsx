@@ -14,11 +14,11 @@ function Collapsible({ id, title, extra, action, children }: { id: string; title
   const [collapsed, toggle] = useCollapsed(id)
   return (
     <section>
-      <div className="flex items-center justify-between gap-2 px-5 pb-2 pt-5">
+      <div className="flex items-center justify-between gap-2 px-4 pb-2 pt-5">
         <button
           onClick={toggle}
           aria-expanded={!collapsed}
-          className="flex min-h-9 min-w-0 flex-1 items-center gap-1.5 border-0 bg-transparent p-0 text-left text-[13px] font-bold tracking-wide text-muted"
+          className="flex min-h-9 min-w-0 flex-1 items-center gap-1.5 border-0 bg-transparent p-0 text-left label text-[11px] font-bold text-muted"
         >
           {collapsed ? <DownIcon size={16} /> : <UpIcon size={16} />}
           <span className="truncate">{title}</span>
@@ -73,7 +73,7 @@ export function Historia() {
       </ScreenTitle>
 
       {/* Kalendarz jest zawsze widoczny; zwijają się tylko lista treningów i pomiary ciała. */}
-      <Card className="mx-5 flex flex-col gap-2.5 p-4">
+      <Card className="mx-4 flex flex-col gap-2.5 p-4">
         <div className="flex items-center justify-between">
           <RoundButton label="Poprzedni miesiąc" onClick={() => shift(-1)}>
             <BackIcon size={18} />
@@ -118,14 +118,14 @@ export function Historia() {
         extra={`${count} ${plural(count, 'trening', 'treningi', 'treningów')}`}
       >
       {month && month.length === 0 && <Empty title="Brak treningów w tym miesiącu" />}
-      <div className="mx-5 flex flex-col gap-2">
+      <div className="mx-4 flex flex-col gap-2">
         {month?.map(({ w, sets }) => {
           const work = sets.filter((s) => s.done && s.type !== 'rozgrzewka').length
           return (
             <button
               key={w.id}
               onClick={() => navigate({ name: 'sesja', id: w.id })}
-              className="flex flex-col gap-1.5 rounded-[20px] border border-solid border-line bg-card px-4 py-3.5 text-left"
+              className="flex flex-col gap-1.5 rounded-card border border-solid border-line bg-card px-4 py-3.5 text-left"
             >
               <div className="flex items-center justify-between">
                 <span className="text-[15px] font-extrabold text-ink">{w.name}</span>
@@ -167,7 +167,7 @@ function BodyCard({ body, onAdd }: { body: BodyMeasurement[]; onAdd: () => void 
   const tiles = latest(body)
   if (tiles.length === 0) {
     return (
-      <Card className="mx-5 flex flex-col gap-3 px-4 py-4">
+      <Card className="mx-4 flex flex-col gap-3 px-4 py-3">
         <p className="m-0 text-sm leading-relaxed text-muted">
           Zapisuj wagę, skład ciała (tłuszcz, woda, mięśnie…) i obwody — zobaczysz tu ostatnie wartości i wykresy.
         </p>
@@ -184,12 +184,12 @@ function BodyCard({ body, onAdd }: { body: BodyMeasurement[]; onAdd: () => void 
     { id: 'obwody', label: 'Obwody' },
   ] as const
   return (
-    <Card className="mx-5 flex flex-col gap-3 px-4 py-4">
+    <Card className="mx-4 flex flex-col gap-3 px-4 py-3">
       <div className="flex items-baseline justify-between gap-2">
         <span className="text-[15px] font-extrabold">{m.label}</span>
         <span className="text-[12px] text-muted">{shortDate(active.date)}</span>
       </div>
-      <div className="text-[26px] font-extrabold leading-none tracking-tight">{withUnit(active.value, m)}</div>
+      <div className="font-num text-[26px] font-extrabold leading-none tracking-tight">{withUnit(active.value, m)}</div>
       <LineChart points={seriesOf(body, m.key)} unit={m.unit} label={`${m.label} w czasie`} />
       {groups.map((g) => {
         const list = tiles.filter((t) => t.metric.group === g.id)
@@ -279,7 +279,7 @@ function MeasureSheet({ all, onClose }: { all: BodyMeasurement[]; onClose: () =>
 
   return (
     <Sheet title="Nowy pomiar" onClose={onClose}>
-      <div className="flex flex-col gap-3 px-5 pb-2">
+      <div className="flex flex-col gap-3 px-4 pb-2">
         <label className="flex flex-col gap-1 text-[12px] font-bold text-muted">
           Data
           <input

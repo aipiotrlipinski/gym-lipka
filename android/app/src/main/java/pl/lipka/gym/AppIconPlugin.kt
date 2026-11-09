@@ -17,6 +17,8 @@ class AppIconPlugin : Plugin() {
 
     private val aliases = mapOf(
         "standard" to "IconStandard",
+        "volt" to "IconVolt",
+        "instrument" to "IconInstrument",
         "puder" to "IconPuder",
         "malina" to "IconMalina",
         "szampan" to "IconSzampan",

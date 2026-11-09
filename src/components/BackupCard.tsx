@@ -66,7 +66,7 @@ export function BackupCard() {
   const s = pending && summarize(pending)
   return (
     <>
-      <Card className="mx-5 flex flex-col gap-3 p-4">
+      <Card className="mx-4 flex flex-col gap-3 p-4">
         <div className="flex flex-col gap-1">
           <span className="text-[15px] font-bold">Kopia zapasowa</span>
           <span className="text-[13px] leading-relaxed text-muted">
@@ -89,7 +89,7 @@ export function BackupCard() {
 
       {s && (
         <Sheet title="Przywrócić kopię?" onClose={() => !busy && setPending(null)}>
-          <div className="flex flex-col gap-3 px-5 pb-2">
+          <div className="flex flex-col gap-3 px-4 pb-2">
             <p className="m-0 text-[15px] leading-relaxed">
               Kopia z <b>{when(s.exportedAt)}</b>: {s.workouts} {plural(s.workouts, 'trening', 'treningi', 'treningów')},{' '}
               {s.plans} {plural(s.plans, 'plan', 'plany', 'planów')}, {s.body} {plural(s.body, 'pomiar', 'pomiary', 'pomiarów')} masy ciała.

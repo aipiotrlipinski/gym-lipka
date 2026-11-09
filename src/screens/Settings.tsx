@@ -43,8 +43,8 @@ export function Settings({
 
   return (
     <div className="flex h-full flex-col overflow-y-auto bg-bg pb-8">
-      <div className="flex items-center justify-between px-5 pb-2 pt-6">
-        <h1 className="m-0 text-[28px] font-extrabold tracking-tight">Ustawienia</h1>
+      <div className="flex items-center justify-between px-4 pb-2 pt-4">
+        <h1 className="head m-0 text-[26px] font-extrabold">Ustawienia</h1>
         <button
           onClick={onClose}
           aria-label="Zamknij ustawienia"
@@ -54,12 +54,12 @@ export function Settings({
         </button>
       </div>
 
-      <div className="px-5 pt-2">
+      <div className="px-4 pt-2">
         <SavedTextField label="Imię" value={name ?? ''} onSave={(v) => v.trim() && saveName(v)} />
       </div>
 
-      <div className="px-5 pb-2 pt-6 text-[13px] font-bold tracking-wide text-muted">MOTYW</div>
-      <div role="radiogroup" aria-label="Motyw" className="mx-5 grid grid-cols-3 gap-1 rounded-2xl bg-soft p-1">
+      <div className="px-4 pb-2 pt-4 label text-[11px] font-bold text-muted">MOTYW</div>
+      <div role="radiogroup" aria-label="Motyw" className="mx-4 grid grid-cols-3 gap-1 rounded-2xl bg-soft p-1">
         {MODES.map((m) => (
           <button
             key={m.id}
@@ -75,8 +75,8 @@ export function Settings({
         ))}
       </div>
 
-      <div className="px-5 pb-2 pt-6 text-[13px] font-bold tracking-wide text-muted">KOLORYSTYKA</div>
-      <div role="radiogroup" aria-label="Kolorystyka" className="mx-5 grid grid-cols-2 gap-2">
+      <div className="px-4 pb-2 pt-4 label text-[11px] font-bold text-muted">KOLORYSTYKA</div>
+      <div role="radiogroup" aria-label="Kolorystyka" className="mx-4 grid grid-cols-2 gap-2">
         {PALETTES.map((p) => {
           const on = palette === p.id
           return (
@@ -99,8 +99,8 @@ export function Settings({
         })}
       </div>
 
-      <div className="px-5 pb-2 pt-6 text-[13px] font-bold tracking-wide text-muted">DANE</div>
-      <Card className="mx-5 flex flex-col">
+      <div className="px-4 pb-2 pt-4 label text-[11px] font-bold text-muted">DANE</div>
+      <Card className="mx-4 flex flex-col">
         <div className="flex items-center justify-between border-b border-line px-4 py-3.5">
           <span className="text-[15px] font-bold">Trwały zapis w telefonie</span>
           <span className={`text-[13px] font-bold ${persisted ? 'text-accent' : 'text-muted'}`}>
@@ -112,22 +112,22 @@ export function Settings({
           <span className="text-[13px] font-bold text-muted">{online ? 'jest' : 'brak — działamy offline'}</span>
         </div>
       </Card>
-      <p className="mx-5 mt-3 text-[13px] leading-relaxed text-muted">
+      <p className="mx-4 mt-3 text-[13px] leading-relaxed text-muted">
         Wszystkie dane zostają w tym telefonie — dlatego rób kopię zapasową.
       </p>
 
-      <div className="px-5 pb-2 pt-6 text-[13px] font-bold tracking-wide text-muted">GOOGLE FIT</div>
+      <div className="px-4 pb-2 pt-4 label text-[11px] font-bold text-muted">GOOGLE FIT</div>
       <HealthCard />
 
       <LockScreenCard />
 
-      <div className="px-5 pb-2 pt-6 text-[13px] font-bold tracking-wide text-muted">KOPIA ZAPASOWA</div>
+      <div className="px-4 pb-2 pt-4 label text-[11px] font-bold text-muted">KOPIA ZAPASOWA</div>
       <BackupCard />
 
-      <div className="px-5 pb-2 pt-6 text-[13px] font-bold tracking-wide text-muted">IMPORT</div>
+      <div className="px-4 pb-2 pt-4 label text-[11px] font-bold text-muted">IMPORT</div>
       <GymRunImport />
 
-      <p className="mx-5 mt-6 text-xs text-muted">Siłka · wersja {__APP_VERSION__}</p>
+      <p className="mx-4 mt-6 text-xs text-muted">Siłka · wersja {__APP_VERSION__}</p>
     </div>
   )
 }

@@ -15,8 +15,8 @@ export function Witaj() {
       }}
     >
       <div className="flex flex-col gap-2">
-        <span className="text-[13px] font-bold tracking-wide text-accent">WITAJ W SIŁCE</span>
-        <h1 className="m-0 text-[32px] font-extrabold leading-tight tracking-tight">Jak masz na imię?</h1>
+        <span className="label text-[11px] font-bold text-accent">WITAJ W SIŁCE</span>
+        <h1 className="head m-0 text-[32px] font-extrabold leading-tight">Jak masz na imię?</h1>
         <p className="m-0 text-[15px] leading-relaxed text-muted">Imię zostaje tylko w tym telefonie. Zmienisz je w Ustawieniach.</p>
       </div>
       <TextField label="Imię" value={name} onChange={setName} placeholder="np. Ania" autoFocus />

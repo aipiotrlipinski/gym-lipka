@@ -11,11 +11,12 @@ const TABS: { id: Tab; label: string; icon: ReactNode }[] = [
   { id: 'miesnie', label: 'Mięśnie', icon: <BodyIcon /> },
 ]
 
+/** Dolny pasek. W kolorystyce Volt pływa jako pigułka (index.css → .tabbar). */
 export function TabBar({ tab, onChange }: { tab: Tab; onChange: (t: Tab) => void }) {
   return (
     <nav
-      className="grid grid-cols-5 border-t border-line bg-card px-2 pt-2"
-      style={{ paddingBottom: 'max(12px, env(safe-area-inset-bottom))' }}
+      className="tabbar grid grid-cols-5 border-t border-line bg-card px-1 pt-1"
+      style={{ paddingBottom: 'max(6px, env(safe-area-inset-bottom))' }}
     >
       {TABS.map((t) => {
         const active = t.id === tab
@@ -24,7 +25,7 @@ export function TabBar({ tab, onChange }: { tab: Tab; onChange: (t: Tab) => void
             key={t.id}
             onClick={() => onChange(t.id)}
             aria-current={active ? 'page' : undefined}
-            className={`flex h-14 flex-col items-center justify-center gap-1 border-0 bg-transparent text-xs ${
+            className={`flex h-12 flex-col items-center justify-center gap-0.5 border-0 bg-transparent text-[11px] ${
               active ? 'font-extrabold text-accent' : 'font-semibold text-muted'
             }`}
           >

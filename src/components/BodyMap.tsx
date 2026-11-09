@@ -14,10 +14,10 @@ export const FULL: Box = { x: -6, y: 2, w: VIEW_W + 12, h: VIEW_H + 4 }
 /** Kolor mięśnia dla poziomu 0–4 (0 = nietrenowany). Oparte na kolorze akcentu, więc działa w każdej kolorystyce. */
 export const LEVEL_FILL = [
   'color-mix(in srgb, var(--ink) 14%, var(--card))',
-  'color-mix(in srgb, var(--accent) 28%, var(--card))',
-  'color-mix(in srgb, var(--accent) 50%, var(--card))',
-  'color-mix(in srgb, var(--accent) 75%, var(--card))',
-  'var(--accent)',
+  'color-mix(in srgb, var(--map) 28%, var(--card))',
+  'color-mix(in srgb, var(--map) 50%, var(--card))',
+  'color-mix(in srgb, var(--map) 75%, var(--card))',
+  'var(--map)',
 ]
 const BODY_FILL = 'color-mix(in srgb, var(--ink) 8%, var(--card))'
 const MIRROR = 'matrix(-1 0 0 1 200 0)'

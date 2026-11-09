@@ -99,11 +99,11 @@ export function ExerciseDetail({ id }: { id: number }) {
       <TopBar fallback={{ name: 'cwiczenia' }}>
         {muscleLabel(exercise.muscle)} · {equipmentLabel(exercise.equipment)}
       </TopBar>
-      <h1 className="m-0 px-5 pb-3 pt-2 text-[26px] font-extrabold leading-tight tracking-tight">{exercise.name}</h1>
-      <div className="px-5 pb-3">
+      <h1 className="head m-0 px-4 pb-3 pt-2 text-[26px] font-extrabold leading-tight">{exercise.name}</h1>
+      <div className="px-4 pb-3">
         <ExercisePhoto exercise={exercise} />
       </div>
-      <div className="px-5 pb-3">
+      <div className="px-4 pb-3">
         <SavedTextField
           key={exercise.id}
           label="Stała notatka (widać ją w każdym treningu)"
@@ -111,7 +111,7 @@ export function ExerciseDetail({ id }: { id: number }) {
           onSave={(v) => db.exercises.update(exercise.id, { note: v.trim() || undefined })}
         />
       </div>
-      <div className="flex flex-col gap-1.5 px-5 pb-3">
+      <div className="flex flex-col gap-1.5 px-4 pb-3">
         <span className="text-[13px] font-bold text-muted">Zapis serii</span>
         <div className="flex flex-wrap gap-2">
           {MEASURES.map((x) => (
@@ -137,7 +137,7 @@ export function ExerciseDetail({ id }: { id: number }) {
         <>
           <div
             role="tablist"
-            className="mx-5 grid gap-1 rounded-2xl bg-soft p-1"
+            className="mx-4 grid gap-1 rounded-2xl bg-soft p-1"
             style={{ gridTemplateColumns: `repeat(${metrics.length}, minmax(0, 1fr))` }}
           >
             {metrics.map((x) => (
@@ -154,9 +154,9 @@ export function ExerciseDetail({ id }: { id: number }) {
               </button>
             ))}
           </div>
-          <Card className="mx-5 mt-3 flex flex-col gap-1 px-4 pb-3 pt-4">
+          <Card className="mx-4 mt-3 flex flex-col gap-1 px-4 pb-3 pt-4">
             <div className="flex flex-wrap items-baseline gap-x-2.5">
-              <span className="text-[32px] font-extrabold tracking-tight">
+              <span className="font-num text-[32px] font-extrabold tracking-tight">
                 {m.fmt(lastPt)} {m.unit}
               </span>
               {weeks > 0 && change !== 0 && (
@@ -172,7 +172,7 @@ export function ExerciseDetail({ id }: { id: number }) {
           {records && (
             <>
               <SectionLabel>REKORDY</SectionLabel>
-              <div className="mx-5 grid grid-cols-3 gap-2">
+              <div className="mx-4 grid grid-cols-3 gap-2">
                 {measure === 'ciężar' && (
                   <>
                     <Record label="Maks. ciężar" value={bodyweight && records.maxW.v === 0 ? 'MC' : `${kg(records.maxW.v)} kg`} sub={`× ${records.maxW.reps} · ${shortDate(records.maxW.date)}`} />
@@ -208,7 +208,7 @@ export function ExerciseDetail({ id }: { id: number }) {
           )}
 
           <SectionLabel>HISTORIA · {history.length}</SectionLabel>
-          <div className="mx-5 flex flex-col gap-2">
+          <div className="mx-4 flex flex-col gap-2">
             {[...history].reverse().map((p) => (
               <button
                 key={p.workoutId}
@@ -216,7 +216,7 @@ export function ExerciseDetail({ id }: { id: number }) {
                 className="flex flex-col gap-1 rounded-[18px] border border-solid border-line bg-card px-4 py-3 text-left"
               >
                 <span className="text-xs font-bold text-muted">{shortDate(p.date)}</span>
-                <span className="text-[15px] font-bold tabular-nums text-ink">
+                <span className="text-[15px] font-bold font-num tabular-nums text-ink">
                   {p.sets
                     .filter((s) => s.done && s.type !== 'rozgrzewka')
                     .map((s) => setLabel(s.weightKg, s.reps, s.durationSec, s.distanceM))
@@ -230,7 +230,7 @@ export function ExerciseDetail({ id }: { id: number }) {
       )}
 
       {exercise.custom && (
-        <div className="mx-5 mt-6 flex flex-col gap-2">
+        <div className="mx-4 mt-6 flex flex-col gap-2">
           <Button variant="soft" onClick={() => setEditing(true)}>
             Edytuj ćwiczenie
           </Button>

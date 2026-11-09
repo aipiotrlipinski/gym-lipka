@@ -42,10 +42,10 @@ export function Cwiczenia() {
 
       {[...groups.entries()].map(([m, items]) => (
         <div key={m}>
-          <div className="px-5 pb-2 pt-5 text-[13px] font-bold tracking-wide text-muted">
+          <div className="px-4 pb-2 pt-5 label text-[11px] font-bold text-muted">
             {muscleLabel(m).toUpperCase()} · {items.length}
           </div>
-          <div className="mx-5 overflow-hidden rounded-[20px] border border-line bg-card">
+          <div className="mx-4 overflow-hidden rounded-card border border-line bg-card">
             {items.map((e, i) => (
               <button
                 key={e.id}
@@ -72,7 +72,7 @@ export function Cwiczenia() {
         </div>
       ))}
       {list.length === 0 && (
-        <p className="mx-5 mt-6 text-sm text-muted">
+        <p className="mx-4 mt-6 text-sm text-muted">
           Brak wyników. Dodaj własne ćwiczenie przyciskiem „+ Własne”.
         </p>
       )}

@@ -5,13 +5,13 @@ import { BackIcon, CloseIcon } from './icons'
 /** Wspólne klocki wyglądu, żeby każdy ekran wyglądał spójnie. */
 
 export function Card({ children, className = '' }: { children: ReactNode; className?: string }) {
-  return <div className={`rounded-3xl border border-line bg-card ${className}`}>{children}</div>
+  return <div className={`rounded-card border border-line bg-card ${className}`}>{children}</div>
 }
 
 export function ScreenTitle({ children, action }: { children: ReactNode; action?: ReactNode }) {
   return (
-    <div className="flex items-center justify-between gap-3 px-5 pb-2 pt-6">
-      <h1 className="m-0 text-[28px] font-extrabold tracking-tight">{children}</h1>
+    <div className="flex items-center justify-between gap-3 px-4 pb-1 pt-4">
+      <h1 className="head m-0 text-[26px] font-extrabold">{children}</h1>
       {action}
     </div>
   )
@@ -20,7 +20,7 @@ export function ScreenTitle({ children, action }: { children: ReactNode; action?
 /** Pasek z przyciskiem Wstecz dla ekranów podrzędnych. */
 export function TopBar({ fallback, children, right }: { fallback: Route; children?: ReactNode; right?: ReactNode }) {
   return (
-    <div className="flex items-center gap-3 px-5 pb-2 pt-5">
+    <div className="flex items-center gap-3 px-4 pb-1 pt-3">
       <RoundButton label="Wstecz" onClick={() => back(fallback)}>
         <BackIcon />
       </RoundButton>
@@ -52,8 +52,8 @@ export function RoundButton({
 
 export function SectionLabel({ children, action }: { children: ReactNode; action?: ReactNode }) {
   return (
-    <div className="flex items-center justify-between px-5 pb-2 pt-5">
-      <span className="text-[13px] font-bold tracking-wide text-muted">{children}</span>
+    <div className="flex items-center justify-between px-4 pb-1.5 pt-4">
+      <span className="label text-[11px] font-bold text-muted">{children}</span>
       {action}
     </div>
   )
@@ -85,7 +85,7 @@ export function Button({
   className?: string
   type?: 'button' | 'submit'
 }) {
-  const h = size === 'lg' ? 'h-14 text-[17px] rounded-2xl' : size === 'sm' ? 'h-9 px-3 text-[13px] rounded-full' : 'h-11 px-4 text-[15px] rounded-2xl'
+  const h = size === 'lg' ? 'h-12 text-[15px] tracking-wide rounded-btn' : size === 'sm' ? 'h-9 px-3 text-[13px] rounded-full' : 'h-11 px-4 text-[15px] rounded-btn'
   return (
     <button
       type={type}
@@ -114,11 +114,11 @@ export function Sheet({ title, onClose, children }: { title: string; onClose: ()
     <div className="fixed inset-0 z-50 flex items-end justify-center" role="dialog" aria-modal="true" aria-label={title}>
       <button aria-label="Zamknij" onClick={onClose} className="absolute inset-0 border-0 bg-black/40" />
       <div
-        className="relative flex max-h-[88vh] w-full max-w-[480px] flex-col rounded-t-3xl bg-bg"
+        className="relative flex max-h-[88vh] w-full max-w-[480px] flex-col rounded-t-card bg-bg"
         style={{ paddingBottom: 'max(16px, env(safe-area-inset-bottom))' }}
       >
-        <div className="flex items-center justify-between px-5 pb-2 pt-4">
-          <h2 className="m-0 text-lg font-extrabold">{title}</h2>
+        <div className="flex items-center justify-between px-4 pb-2 pt-3">
+          <h2 className="head m-0 text-lg font-extrabold">{title}</h2>
           <RoundButton label="Zamknij" onClick={onClose}>
             <CloseIcon />
           </RoundButton>
@@ -187,7 +187,7 @@ export function Stepper({
             const n = parseFloat(text.replace(',', '.'))
             if (Number.isFinite(n)) onChange(Math.max(min, n))
           }}
-          className={`min-w-0 max-w-full border-0 bg-transparent p-0 text-center font-extrabold outline-none ${accent ? 'text-accent' : 'text-ink'} ${compact ? 'text-base' : 'text-[19px]'}`}
+          className={`min-w-0 max-w-full border-0 bg-transparent p-0 text-center font-num font-extrabold outline-none ${accent ? 'text-accent' : 'text-ink'} ${compact ? 'text-base' : 'text-[19px]'}`}
         />
         {suffix && <span className={`shrink-0 text-xs font-bold ${accent ? 'text-accent' : 'text-muted'}`}>{suffix}</span>}
       </label>
@@ -223,7 +223,7 @@ export function TextField({
         autoFocus={autoFocus}
         placeholder={placeholder}
         onChange={(e) => onChange(e.target.value)}
-        className="h-12 rounded-2xl border border-line bg-card px-4 text-base font-semibold text-ink outline-none focus:border-accent"
+        className="h-12 rounded-btn border border-line bg-card px-4 text-base font-semibold text-ink outline-none focus:border-accent"
       />
     </label>
   )
@@ -247,8 +247,8 @@ export function SavedTextField({ label, value, onSave }: { label: string; value:
 /** Pusty stan listy. */
 export function Empty({ title, children }: { title: string; children?: ReactNode }) {
   return (
-    <Card className="mx-5 mt-3 flex flex-col gap-2 p-5">
-      <span className="text-[17px] font-extrabold">{title}</span>
+    <Card className="mx-4 mt-3 flex flex-col gap-2 p-4">
+      <span className="head text-[17px] font-extrabold">{title}</span>
       {children && <div className="text-sm leading-relaxed text-muted">{children}</div>}
     </Card>
   )
@@ -272,7 +272,7 @@ export function Confirm({
 }) {
   return (
     <Sheet title={title} onClose={onClose}>
-      <div className="flex flex-col gap-3 px-5 pb-2">
+      <div className="flex flex-col gap-3 px-4 pb-2">
         <p className="m-0 text-[15px] leading-relaxed text-muted">{text}</p>
         <Button
           size="lg"

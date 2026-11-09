@@ -193,11 +193,11 @@ export function Workout({ id }: { id: number }) {
   return (
     <div className="flex min-h-full flex-col overflow-x-clip">
       {/* Pasek górny */}
-      <div className="flex items-center justify-between px-5 pb-2 pt-5">
+      <div className="flex items-center justify-between px-4 pb-2 pt-5">
         <RoundButton label="Wstecz" onClick={() => back({ name: 'start' })}>
           <BackIcon />
         </RoundButton>
-        <span className="text-sm tabular-nums text-muted">{clock(elapsed)}</span>
+        <span className="font-num text-lg font-bold tabular-nums text-accent">{clock(elapsed)}</span>
         {live ? (
           <Button variant="outline" onClick={() => setSheet('finish')} className="!rounded-full">
             Zakończ
@@ -219,7 +219,7 @@ export function Workout({ id }: { id: number }) {
       ) : (
         <div {...swipe.handlers} style={swipe.style}>
           {/* Nagłówek ćwiczenia — przesunięcie palcem w bok zmienia ćwiczenie */}
-          <div className="flex items-start gap-3 px-5 pb-3 pt-2">
+          <div className="flex items-start gap-3 px-4 pb-3 pt-2">
             {exerciseImage(exercise) && (
               <button
                 onClick={() => setSheet('photo')}
@@ -233,10 +233,10 @@ export function Workout({ id }: { id: number }) {
               onClick={() => setSheet('menu')}
               className="flex min-w-0 flex-1 flex-col items-start gap-1 border-0 bg-transparent p-0 text-left"
             >
-              <span className="text-[13px] font-bold tracking-wide text-accent">
+              <span className="label text-[11px] font-bold text-accent">
                 {workout.name.toUpperCase()} · ĆWICZENIE {i + 1} Z {items.length}
               </span>
-              <span className="text-[26px] font-extrabold leading-tight tracking-tight text-ink">{exercise?.name ?? '…'}</span>
+              <span className="head text-[28px] font-extrabold leading-[1.05] text-ink">{exercise?.name ?? '…'}</span>
               {ssLabel && (
                 <span className="text-[13px] font-bold text-accent">
                   Superseria {ssLabel} · z: {partners.join(', ')}
@@ -249,7 +249,7 @@ export function Workout({ id }: { id: number }) {
           </div>
 
           {doneItem && !doneItem.note && (
-            <div className="mx-5 mb-3 flex items-center gap-2 rounded-2xl border border-solid border-accent bg-card py-1.5 pl-4 pr-1.5">
+            <div className="mx-4 mb-3 flex items-center gap-2 rounded-2xl border border-solid border-accent bg-card py-1.5 pl-4 pr-1.5">
               <button
                 onClick={() => openComment(doneItem.exerciseId)}
                 className="flex min-w-0 flex-1 flex-col items-start gap-0.5 border-0 bg-transparent p-0 py-1 text-left"
@@ -270,9 +270,9 @@ export function Workout({ id }: { id: number }) {
           {lastComment && (
             <button
               onClick={() => openComment(cur.exerciseId)}
-              className="mx-5 mb-3 flex w-[calc(100%-40px)] flex-col gap-0.5 rounded-2xl border-0 border-l-4 border-solid border-accent bg-soft px-4 py-2.5 text-left text-[14px] leading-snug text-ink"
+              className="mx-4 mb-3 flex w-[calc(100%-40px)] flex-col gap-0.5 rounded-2xl border-0 border-l-4 border-solid border-accent bg-soft px-4 py-2.5 text-left text-[14px] leading-snug text-ink"
             >
-              <span className="text-[11px] font-extrabold tracking-wide text-accent">
+              <span className="label text-[11px] font-extrabold text-accent">
                 💬 KOMENTARZ Z OSTATNIEGO RAZU · {shortDate(lastComment.date)}
               </span>
               <span>{lastComment.note}</span>
@@ -282,7 +282,7 @@ export function Workout({ id }: { id: number }) {
           {exercise?.note && (
             <button
               onClick={() => setSheet('menu')}
-              className="mx-5 mb-3 flex w-[calc(100%-40px)] flex-col gap-1 rounded-2xl border-0 bg-soft px-4 py-2.5 text-left text-[13px] leading-snug text-ink"
+              className="mx-4 mb-3 flex w-[calc(100%-40px)] flex-col gap-1 rounded-2xl border-0 bg-soft px-4 py-2.5 text-left text-[13px] leading-snug text-ink"
             >
               <span>
                 <span className="font-extrabold">Notatka: </span>
@@ -294,8 +294,8 @@ export function Workout({ id }: { id: number }) {
           <TipsToggle key={cur.exerciseId} exercise={exercise} />
 
           {showSuggestion && suggestion && (
-            <div className="mx-5 mb-3 flex flex-col gap-2 rounded-[20px] border-2 border-solid border-accent bg-card px-4 py-3.5">
-              <span className="text-xs font-bold tracking-wide text-accent">
+            <div className="mx-4 mb-3 flex flex-col gap-2 rounded-card border-2 border-solid border-accent bg-card px-4 py-3.5">
+              <span className="label text-[11px] font-bold text-accent">
                 {suggestion.kind === 'ciężar' ? 'CZAS NA PROGRES' : 'CEL NA DZIŚ'}
               </span>
               <span className="text-[17px] font-extrabold leading-snug">{suggestion.title}</span>
@@ -311,14 +311,14 @@ export function Workout({ id }: { id: number }) {
             </div>
           )}
           {firstTime && (
-            <p className="mx-5 mb-3 mt-0 rounded-2xl bg-soft px-4 py-3 text-[13px] leading-snug text-ink">
+            <p className="mx-4 mb-3 mt-0 rounded-2xl bg-soft px-4 py-3 text-[13px] leading-snug text-ink">
               Pierwszy raz to ćwiczenie: wpisz ciężar w pierwszej serii — kolejne serie przejmą go automatycznie. Od następnego
               treningu wszystko podpowie się samo.
             </p>
           )}
 
           {/* Serie */}
-          <Card className="mx-5 flex flex-col gap-2 p-3.5">
+          <Card className="mx-4 flex flex-col gap-2 p-3.5">
             {sets.map((s, n) => {
               const p = prev?.[n]
               const pr = prs.get(s.id)
@@ -359,7 +359,7 @@ export function Workout({ id }: { id: number }) {
                   >
                     {s.done ? <CheckIcon size={14} /> : TYPE_SHORT[s.type] || workN}
                   </span>
-                  <span className={`flex-1 text-base tabular-nums ${s.done ? 'font-extrabold' : 'font-semibold'}`}>
+                  <span className={`flex-1 text-base font-num tabular-nums ${s.done ? 'font-extrabold' : 'font-semibold'}`}>
                     {measure === 'ciężar' ? `${s.weightKg === 0 ? 'MC' : `${kg(s.weightKg)} kg`} × ${s.reps}` : setLabelAs(measure, s)}
                   </span>
                   {pr ? (
@@ -383,13 +383,13 @@ export function Workout({ id }: { id: number }) {
           {cur.note ? (
             <button
               onClick={() => openComment(cur.exerciseId)}
-              className="mx-5 mt-3 flex w-[calc(100%-40px)] flex-col gap-0.5 rounded-2xl border border-solid border-line bg-card px-4 py-2.5 text-left text-[14px] leading-snug text-ink"
+              className="mx-4 mt-3 flex w-[calc(100%-40px)] flex-col gap-0.5 rounded-2xl border border-solid border-line bg-card px-4 py-2.5 text-left text-[14px] leading-snug text-ink"
             >
-              <span className="text-[11px] font-extrabold tracking-wide text-muted">💬 TWÓJ KOMENTARZ NA NASTĘPNY RAZ</span>
+              <span className="label text-[11px] font-extrabold text-muted">💬 TWÓJ KOMENTARZ NA NASTĘPNY RAZ</span>
               <span>{cur.note}</span>
             </button>
           ) : (
-            <Button variant="ghost" size="sm" onClick={() => openComment(cur.exerciseId)} className="mx-5 mt-2">
+            <Button variant="ghost" size="sm" onClick={() => openComment(cur.exerciseId)} className="mx-4 mt-2">
               💬 Dodaj komentarz na następny raz
             </Button>
           )}
@@ -400,11 +400,11 @@ export function Workout({ id }: { id: number }) {
 
       {/* Timer przerwy i następne ćwiczenie */}
       {live && restState && (
-        <div className="mx-5 mt-4 flex flex-col gap-2.5 border-0 border-t border-solid border-line pb-1 pt-4">
+        <div className="mx-4 mt-3 flex flex-col gap-2.5 border-0 border-t border-solid border-line pb-1 pt-4">
           <div className="flex items-center justify-between">
             <button onClick={() => rest.stop()} className="flex flex-col items-start gap-0.5 border-0 bg-transparent p-0 text-left">
               <span className="text-xs text-muted">{restState.finished ? 'Przerwa skończona · dotknij, aby zamknąć' : 'Przerwa'}</span>
-              <span className={`text-[32px] font-extrabold leading-none tabular-nums ${restState.finished ? 'text-accent' : 'text-ink'}`}>
+              <span className={`text-[32px] font-extrabold leading-none font-num tabular-nums ${restState.finished ? 'text-accent' : 'text-ink'}`}>
                 {clock(restState.left)}
               </span>
             </button>
@@ -424,7 +424,7 @@ export function Workout({ id }: { id: number }) {
       )}
       {items.length > 0 && (
         <div
-          className="mx-5 flex justify-between gap-3 pt-3 text-sm text-muted"
+          className="mx-4 flex justify-between gap-3 pt-3 text-sm text-muted"
           style={{ paddingBottom: 'max(20px, env(safe-area-inset-bottom))' }}
         >
           {nextItem ? (
@@ -444,7 +444,7 @@ export function Workout({ id }: { id: number }) {
       {sheet === 'photo' && exercise && <PhotoSheet exercise={exercise} onClose={() => setSheet(null)} />}
       {sheet === 'list' && (
         <Sheet title="Ćwiczenia w treningu" onClose={() => setSheet(null)}>
-          <div className="flex flex-col gap-2 px-5 pb-2">
+          <div className="flex flex-col gap-2 px-4 pb-2">
             {items.map((it, j) => {
               const ss = allSets.filter((s) => s.exerciseId === it.exerciseId)
               const d = ss.filter((s) => s.done).length
@@ -682,7 +682,7 @@ function ActiveSet({
 /** Łącznik między ćwiczeniami superserii na liście. */
 export function SupersetLink() {
   return (
-    <div className="flex items-center gap-2 py-1 pl-6 text-[11px] font-extrabold tracking-wide text-accent">
+    <div className="flex items-center gap-2 py-1 pl-6 label text-[11px] font-extrabold text-accent">
       <span className="h-4 w-0.5 rounded-full bg-accent" />
       SUPERSERIA
     </div>
@@ -723,7 +723,7 @@ function ExerciseMenu({
   const [fixed, setFixed] = useState(exercise?.note ?? '')
   return (
     <Sheet title={exercise?.name ?? 'Ćwiczenie'} onClose={onClose}>
-      <div className="flex flex-col gap-2 px-5 pb-2">
+      <div className="flex flex-col gap-2 px-4 pb-2">
         <TextField
           label="Stała notatka (w każdym treningu)"
           value={fixed}
@@ -783,7 +783,7 @@ function FinishSheet({
   const [n, setN] = useState(note)
   return (
     <Sheet title="Zakończyć trening?" onClose={onClose}>
-      <div className="flex flex-col gap-3 px-5 pb-2">
+      <div className="flex flex-col gap-3 px-4 pb-2">
         {undone > 0 && (
           <p className="m-0 text-[15px] text-muted">
             Niezaliczone serie ({undone}) nie zostaną zapisane w historii.
@@ -827,7 +827,7 @@ function CommentSheet({
   const [n, setN] = useState(note)
   return (
     <Sheet title={exerciseName} onClose={onClose}>
-      <div className="flex flex-col gap-3 px-5 pb-2">
+      <div className="flex flex-col gap-3 px-4 pb-2">
         <label className="flex flex-col gap-1.5 text-[13px] font-bold text-muted">
           Komentarz — zobaczysz go przy następnym treningu
           <textarea

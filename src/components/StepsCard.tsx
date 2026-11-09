@@ -44,7 +44,7 @@ export function StepsCard() {
 
   if (status.status !== 'available') {
     return (
-      <Card className="mx-5 mt-4 flex flex-col gap-3 px-5 py-4">
+      <Card className="mx-4 mt-2.5 flex flex-col gap-2 px-4 py-3">
         <span className="text-[15px] font-extrabold">Kroki</span>
         <span className="text-[13px] leading-relaxed text-muted">
           {status.status === 'update_required'
@@ -60,7 +60,7 @@ export function StepsCard() {
 
   if (!status.steps) {
     return (
-      <Card className="mx-5 mt-4 flex flex-col gap-3 px-5 py-4">
+      <Card className="mx-4 mt-2.5 flex flex-col gap-2 px-4 py-3">
         <span className="text-[15px] font-extrabold">Kroki z Google Fit</span>
         <span className="text-[13px] leading-relaxed text-muted">
           Połącz z Health Connect: zobaczysz tu kroki, a treningi trafią do Google Fit razem z kaloriami.
@@ -86,7 +86,7 @@ export function StepsCard() {
   const many = range === 30
 
   return (
-    <Card className="mx-5 mt-4 flex flex-col gap-3 px-5 py-4">
+    <Card className="mx-4 mt-2.5 flex flex-col gap-2 px-4 py-3">
       <div className="flex items-center justify-between gap-2">
         <span className="text-[15px] font-extrabold">Kroki</span>
         <div role="radiogroup" aria-label="Zakres" className="flex gap-0.5 rounded-full bg-soft p-0.5">
@@ -99,7 +99,7 @@ export function StepsCard() {
                 setSel(null)
                 setPref(RANGE_KEY, n === 30 ? '30' : null)
               }}
-              className={`h-8 rounded-full border-0 px-3 text-xs ${range === n ? 'bg-card font-extrabold text-ink' : 'bg-transparent font-bold text-muted'}`}
+              className={`h-7 rounded-full border-0 px-3 text-xs ${range === n ? 'bg-card font-extrabold text-ink' : 'bg-transparent font-bold text-muted'}`}
             >
               {n} dni
             </button>
@@ -109,7 +109,7 @@ export function StepsCard() {
       <div className="flex items-end justify-between gap-3">
         <div className="flex flex-col">
           <span className="text-[13px] text-muted">{isToday ? 'dziś' : picked && dayLabel(picked.date)}</span>
-          <span className="text-[30px] font-extrabold leading-tight tracking-tight tabular-nums">{picked ? thousands(picked.steps) : '…'}</span>
+          <span className="font-num text-[30px] font-bold leading-tight tracking-tight tabular-nums">{picked ? thousands(picked.steps) : '…'}</span>
         </div>
         {avg > 0 && (
           <span className="pb-1.5 text-right text-[12px] leading-snug text-muted">
@@ -133,7 +133,7 @@ export function StepsCard() {
                 aria-pressed={on}
                 className="flex min-w-0 flex-1 flex-col items-center gap-1 border-0 bg-transparent p-0"
               >
-                <div className="flex h-14 w-full items-end">
+                <div className="flex h-12 w-full items-end">
                   <div
                     className={`w-full ${many ? 'rounded-[3px]' : 'rounded-md'} ${on ? 'bg-accent' : 'bg-soft'}`}
                     style={{ height: `${Math.max(6, (d.steps / max) * 100)}%` }}
@@ -145,7 +145,6 @@ export function StepsCard() {
           })}
         </div>
       )}
-      <span className="text-[12px] text-muted">Stuknij słupek, żeby zobaczyć kroki z danego dnia.</span>
       {days && days.every((d) => d.steps === 0) && (
         <span className="text-[12px] leading-relaxed text-muted">
           Zero kroków? W Google Fit włącz Ustawienia → Synchronizuj z Health Connect.

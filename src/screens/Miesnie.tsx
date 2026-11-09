@@ -110,10 +110,10 @@ function ExerciseList({ title, items, last }: { title: string; items: Exercise[]
   const sorted = [...items].sort((a, b) => (last.get(b.id)?.at ?? 0) - (last.get(a.id)?.at ?? 0) || a.name.localeCompare(b.name, 'pl'))
   return (
     <>
-      <div className="px-5 pb-2 pt-5 text-[13px] font-bold tracking-wide text-muted">
+      <div className="px-4 pb-2 pt-5 label text-[11px] font-bold text-muted">
         {title} · {items.length}
       </div>
-      <div className="mx-5 overflow-hidden rounded-[20px] border border-line bg-card">
+      <div className="mx-4 overflow-hidden rounded-card border border-line bg-card">
         {sorted.map((e, i) => (
           <ExerciseRow key={e.id} e={e} last={last.get(e.id)} divider={i < sorted.length - 1} />
         ))}
@@ -125,10 +125,10 @@ function ExerciseList({ title, items, last }: { title: string; items: Exercise[]
 function Legend({ days }: { days: number }) {
   const steps = ['0', '1–3', '4–7', '8–11', '12+']
   return (
-    <div className="flex flex-col items-center gap-1.5 px-5 pt-1">
+    <div className="flex flex-col items-center gap-1.5 px-4 pt-1">
       <div className="flex items-center gap-2.5">
         {steps.map((s, i) => (
-          <span key={s} className="flex items-center gap-1 text-[11px] font-bold text-muted tabular-nums">
+          <span key={s} className="flex items-center gap-1 text-[11px] font-bold text-muted font-num tabular-nums">
             <span className="h-3 w-3 rounded-[4px]" style={{ background: LEVEL_FILL[i] }} />
             {s}
           </span>
@@ -178,7 +178,7 @@ export function Miesnie({ id }: { id?: number }) {
   return (
     <div className="pb-6">
       <ScreenTitle>Mięśnie</ScreenTitle>
-      <div className="flex items-center justify-between gap-2 px-5 pt-1">
+      <div className="flex items-center justify-between gap-2 px-4 pt-1">
         <Segmented
           label="Widok"
           value={side}
@@ -202,7 +202,7 @@ export function Miesnie({ id }: { id?: number }) {
         />
       </div>
 
-      <div className="relative mx-5 mt-3">
+      <div className="relative mx-4 mt-3">
         <BodyMap side={side} levels={calc?.levels ?? ({} as Record<MuscleId, number>)} selected={selected} onSelect={select} style={{ height: muscle ? 'min(40vh, 340px)' : 'min(56vh, 460px)', transition: 'height 420ms ease' }} />
         {muscle && (
           <div className="absolute left-0 top-0">
@@ -217,7 +217,7 @@ export function Miesnie({ id }: { id?: number }) {
 
       {muscle && lists && (
         <>
-          <Card className="mx-5 mt-3 flex items-center justify-between gap-3 px-5 py-4">
+          <Card className="mx-4 mt-3 flex items-center justify-between gap-3 px-4 py-3">
             <div className="flex min-w-0 flex-col">
               <span className="text-[19px] font-extrabold leading-tight">{muscle.label}</span>
               <span className="text-[13px] text-muted">
@@ -230,7 +230,7 @@ export function Miesnie({ id }: { id?: number }) {
           </Card>
           <ExerciseList title="GŁÓWNIE" items={lists.primary} last={calc!.last} />
           <ExerciseList title="POMOCNICZO" items={lists.secondary} last={calc!.last} />
-          <p className="mx-5 mt-4 text-xs leading-relaxed text-muted">
+          <p className="mx-4 mt-3 text-xs leading-relaxed text-muted">
             Seria ćwiczenia, w którym mięsień pracuje pomocniczo, liczy się jako pół serii.
           </p>
         </>
@@ -238,8 +238,8 @@ export function Miesnie({ id }: { id?: number }) {
 
       {!muscle && calc && (
         <>
-          <div className="px-5 pb-2 pt-5 text-[13px] font-bold tracking-wide text-muted">WSZYSTKIE MIĘŚNIE</div>
-          <div className="mx-5 overflow-hidden rounded-[20px] border border-line bg-card">
+          <div className="px-4 pb-2 pt-5 label text-[11px] font-bold text-muted">WSZYSTKIE MIĘŚNIE</div>
+          <div className="mx-4 overflow-hidden rounded-card border border-line bg-card">
             {MUSCLE_LIST.map((m, i) => (
               <button
                 key={m.id}
@@ -253,7 +253,7 @@ export function Miesnie({ id }: { id?: number }) {
               >
                 <span className="h-4 w-4 shrink-0 rounded-[5px]" style={{ background: LEVEL_FILL[calc.levels[m.id]] }} aria-hidden />
                 <span className="flex-1 text-[15px] font-bold text-ink">{m.label}</span>
-                <span className="text-[13px] font-bold text-muted tabular-nums">{fmtSets(calc.volume[m.id])}</span>
+                <span className="text-[13px] font-bold text-muted font-num tabular-nums">{fmtSets(calc.volume[m.id])}</span>
                 <ChevronIcon />
               </button>
             ))}

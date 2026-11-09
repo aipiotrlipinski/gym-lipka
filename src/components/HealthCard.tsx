@@ -12,7 +12,7 @@ export function HealthCard() {
 
   if (!isApk) {
     return (
-      <p className="mx-5 m-0 text-[13px] leading-relaxed text-muted">
+      <p className="mx-4 m-0 text-[13px] leading-relaxed text-muted">
         Kroki z Google Fit i zapis treningów do Google Fit działają w wersji APK aplikacji.
       </p>
     )
@@ -28,7 +28,7 @@ export function HealthCard() {
 
   return (
     <>
-      <Card className="mx-5 flex flex-col">
+      <Card className="mx-4 flex flex-col">
         {st.status === 'available' ? (
           <>
             {row('Kroki na ekranie Start', st.steps)}
@@ -40,7 +40,7 @@ export function HealthCard() {
           </div>
         )}
       </Card>
-      <div className="mx-5 mt-3 flex flex-col gap-2">
+      <div className="mx-4 mt-3 flex flex-col gap-2">
         {st.status === 'available' && !(st.steps && st.writeWorkout) && (
           <Button onClick={async () => setSt(await connectHealth().catch(() => st))}>Połącz z Google Fit</Button>
         )}
@@ -48,7 +48,7 @@ export function HealthCard() {
           {st.status === 'available' ? 'Uprawnienia w Health Connect' : 'Otwórz Sklep Play'}
         </Button>
       </div>
-      <p className="mx-5 mt-3 text-[13px] leading-relaxed text-muted">
+      <p className="mx-4 mt-3 text-[13px] leading-relaxed text-muted">
         Google Fit przekazuje kroki przez Health Connect. Jeśli kroki się nie pojawiają, w Google Fit włącz Ustawienia → Synchronizuj z
         Health Connect.
       </p>

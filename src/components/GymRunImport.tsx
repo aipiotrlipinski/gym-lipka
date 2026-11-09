@@ -45,7 +45,7 @@ export function GymRunImport() {
   const p = preview
   return (
     <>
-      <Card className="mx-5 flex flex-col gap-3 p-4">
+      <Card className="mx-4 flex flex-col gap-3 p-4">
         <div className="flex flex-col gap-1">
           <span className="text-[15px] font-bold">Import z GymRun</span>
           <span className="text-[13px] leading-relaxed text-muted">
@@ -71,7 +71,7 @@ export function GymRunImport() {
 
       {p && (
         <Sheet title="Import z GymRun" onClose={() => !busy && setPreview(null)}>
-          <div className="flex flex-col gap-3 px-5 pb-2">
+          <div className="flex flex-col gap-3 px-4 pb-2">
             {p.fresh.length === 0 ? (
               <p className="m-0 text-[15px] leading-relaxed text-muted">
                 Wszystkie treningi z tego pliku ({p.workouts.length}) są już w aplikacji. Nie ma czego dodać.

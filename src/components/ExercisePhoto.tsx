@@ -61,7 +61,7 @@ export function ExercisePhoto({ exercise, className = '' }: { exercise?: Exercis
     <button
       onClick={() => setPlaying((p) => !p)}
       aria-label={playing ? 'Zatrzymaj animację ruchu' : 'Pokaż animację ruchu'}
-      className={`relative block aspect-[3/2] w-full overflow-hidden rounded-[20px] border border-solid border-line bg-soft p-0 ${className}`}
+      className={`relative block aspect-[3/2] w-full overflow-hidden rounded-card border border-solid border-line bg-soft p-0 ${className}`}
     >
       {([0, 1] as const).map((k) => (
         <img
@@ -103,7 +103,7 @@ export function ExercisePhoto({ exercise, className = '' }: { exercise?: Exercis
 export function PhotoSheet({ exercise, onClose }: { exercise: Exercise; onClose: () => void }) {
   return (
     <Sheet title={exercise.name} onClose={onClose}>
-      <div className="px-5 pb-3">
+      <div className="px-4 pb-3">
         <ExercisePhoto exercise={exercise} />
         <p className="mb-0 mt-2 text-xs text-muted">Dotknij zdjęcia, żeby zatrzymać ruch. „Start” i „Koniec” pokazują pozycje.</p>
       </div>
@@ -132,7 +132,7 @@ export function ImagePickerSheet({
   const list = all.filter(([n]) => norm(q.trim()).split(/\s+/).every((w) => norm(n).includes(w)))
   return (
     <Sheet title="Wybierz zdjęcie" onClose={onClose}>
-      <div className="px-5">
+      <div className="px-4">
         <input
           value={q}
           onChange={(e) => setQ(e.target.value)}

@@ -24,8 +24,8 @@ export function TipsCard({ exercise }: { exercise?: Exercise }) {
   const tips = tipsFor(exercise)
   if (tips.length === 0) return null
   return (
-    <div className="mx-5 mb-1 flex flex-col gap-2.5 rounded-[20px] bg-soft px-4 py-3.5">
-      <span className="text-[13px] font-bold tracking-wide text-muted">NA CO ZWRACAĆ UWAGĘ</span>
+    <div className="mx-4 mb-1 flex flex-col gap-2.5 rounded-card bg-soft px-4 py-3.5">
+      <span className="label text-[11px] font-bold text-muted">NA CO ZWRACAĆ UWAGĘ</span>
       <TipList tips={tips} />
     </div>
   )
@@ -37,7 +37,7 @@ export function TipsToggle({ exercise }: { exercise?: Exercise }) {
   const tips = tipsFor(exercise)
   if (tips.length === 0) return null
   return (
-    <div className="mx-5 mb-3">
+    <div className="mx-4 mb-3">
       <button
         onClick={() => setOpen(!open)}
         aria-expanded={open}
