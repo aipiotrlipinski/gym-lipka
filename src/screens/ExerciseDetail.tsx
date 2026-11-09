@@ -222,6 +222,7 @@ export function ExerciseDetail({ id }: { id: number }) {
                     .map((s) => setLabel(s.weightKg, s.reps, s.durationSec, s.distanceM))
                     .join('  ·  ')}
                 </span>
+                {p.note && <span className="text-[13px] leading-snug text-muted">💬 {p.note}</span>}
               </button>
             ))}
           </div>

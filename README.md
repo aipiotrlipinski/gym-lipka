@@ -10,6 +10,7 @@ Każdy push do gałęzi `silka` buduje nowe APK pod tym samym adresem.
 
 ## Co nowego
 
+- Komentarz do ćwiczenia: pod seriami „💬 Dodaj komentarz na następny raz” (po ostatniej serii ćwiczenia aplikacja sama o to zapyta). Przy następnym treningu z tym ćwiczeniem komentarz wyświetla się nad seriami; widać go też w historii ćwiczenia.
 - Pierwsze uruchomienie pyta o imię — na Start „Cześć, imię” (zmiana w Ustawieniach).
 - Kroki: stuknij słupek, żeby zobaczyć dowolny dzień; zakres 7 albo 30 dni.
 - Plany: obciążenie przy każdym ćwiczeniu prosto na ekranie Plany, wyróżnione kolorem kolorystyki. Trening startuje z tego ciężaru, a po treningu plan sam przyjmuje ciężar, który zrobiłeś.

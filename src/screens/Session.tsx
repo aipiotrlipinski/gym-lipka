@@ -113,7 +113,7 @@ export function Session({ id, fresh = false }: { id: number; fresh?: boolean }) 
               <span className="text-[13px] tabular-nums text-muted">
                 {ss.map((s) => (s.type === 'rozgrzewka' ? `(${setLabel(s.weightKg, s.reps, s.durationSec, s.distanceM)})` : setLabel(s.weightKg, s.reps, s.durationSec, s.distanceM))).join('  ·  ')}
               </span>
-              {it.note && <span className="text-xs text-muted">Notatka: {it.note}</span>}
+              {it.note && <span className="text-xs text-muted">💬 {it.note}</span>}
             </button>
           )
         })}

@@ -2,9 +2,9 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { useEffect, useMemo, useState } from 'react'
 import { db, type Exercise, type WorkoutSet } from '../db'
 import { back, navigate } from '../router'
-import { clock, kg, plural, setLabel, setLabelAs } from '../lib/format'
+import { clock, kg, plural, setLabel, setLabelAs, shortDate } from '../lib/format'
 import { fieldsOf, measureOf } from '../lib/measure'
-import { exerciseBests, lastSessionSets, livePRs } from '../lib/stats'
+import { exerciseBests, lastExerciseComment, lastSessionSets, livePRs } from '../lib/stats'
 import { suggest } from '../lib/progress'
 import { rest, unlockAudio, useNow, useRest, useWakeLock } from '../lib/rest'
 import {
@@ -21,7 +21,7 @@ import {
 import { afterSet, groupOf, linkedWithNext, supersetLabel } from '../lib/superset'
 import { useSwipe } from '../components/useSwipe'
 import { Badge, Button, Card, Confirm, Empty, RoundButton, Sheet, Stepper, TextField } from '../components/ui'
-import { BackIcon, CheckIcon, ListBulletIcon } from '../components/icons'
+import { BackIcon, CheckIcon, CloseIcon, ListBulletIcon } from '../components/icons'
 import { ExercisePicker, useExercises } from '../components/exercises'
 import { TipsToggle } from '../components/Tips'
 import { ExerciseThumb, PhotoSheet } from '../components/ExercisePhoto'
@@ -43,8 +43,12 @@ export function Workout({ id }: { id: number }) {
 
   const [idx, setIdx] = useState<number | null>(null)
   const [editingSet, setEditingSet] = useState<number | null>(null)
-  const [sheet, setSheet] = useState<null | 'list' | 'add' | 'menu' | 'swap' | 'finish' | 'discard' | 'photo'>(null)
+  const [sheet, setSheet] = useState<null | 'list' | 'add' | 'menu' | 'swap' | 'finish' | 'discard' | 'photo' | 'comment'>(null)
   const [swapPermanent, setSwapPermanent] = useState(false)
+  /** Ćwiczenie, do którego piszemy komentarz (bieżące albo właśnie skończone). */
+  const [commentFor, setCommentFor] = useState<number | null>(null)
+  /** Ćwiczenie skończone przed chwilą — na następnym ekranie pasek „dodaj komentarz”. */
+  const [justDone, setJustDone] = useState<number | null>(null)
 
   const items = workout?.items ?? []
 
@@ -82,6 +86,7 @@ export function Workout({ id }: { id: number }) {
   const sets = useMemo(() => (allSets ?? []).filter((s) => s.exerciseId === cur?.exerciseId), [allSets, cur?.exerciseId])
 
   const prev = useLiveQuery(async () => (cur ? lastSessionSets(cur.exerciseId, id) : []), [cur?.exerciseId, id])
+  const lastComment = useLiveQuery(async () => (cur ? lastExerciseComment(cur.exerciseId, id) : undefined), [cur?.exerciseId, id])
   const bests = useLiveQuery(
     async () => (cur ? exerciseBests(cur.exerciseId, id, workout?.startedAt) : undefined),
     [cur?.exerciseId, id, workout?.startedAt],
@@ -150,12 +155,25 @@ export function Workout({ id }: { id: number }) {
     if (!live || wasEditing) return
     // Zwykłe ćwiczenie: przerwa, a po ostatniej serii — następne niedokończone.
     // Superseria: od razu następne ćwiczenie z rundy, przerwa dopiero po całej rundzie.
-    const next = afterSet(items, allSets.map((x) => (x.id === s.id ? { ...x, done: true } : x)), i)
+    const after = allSets.map((x) => (x.id === s.id ? { ...x, done: true } : x))
+    // Ostatnia seria ćwiczenia → zaproponuj komentarz na następny raz.
+    setJustDone(after.some((x) => x.exerciseId === cur.exerciseId && !x.done) ? null : cur.exerciseId)
+    const next = afterSet(items, after, i)
     if (next.rest) {
       if (cur.restSec > 0) rest.start(cur.restSec, exercise?.name ?? '')
     } else if (next.goTo !== null) rest.stop()
     if (next.goTo !== null && next.goTo !== i) setIdx(next.goTo)
   }
+
+  const openComment = (exerciseId: number) => {
+    setCommentFor(exerciseId)
+    setSheet('comment')
+  }
+  const saveComment = (exerciseId: number, note: string) =>
+    db.workouts.update(id, {
+      items: items.map((it) => (it.exerciseId === exerciseId ? { ...it, note: note.trim() || undefined } : it)),
+    })
+  const doneItem = justDone !== null && justDone !== cur?.exerciseId ? items.find((it) => it.exerciseId === justDone) : undefined
 
   const finish = async () => {
     rest.stop()
@@ -230,23 +248,46 @@ export function Workout({ id }: { id: number }) {
             </RoundButton>
           </div>
 
-          {(exercise?.note || cur.note) && (
+          {doneItem && !doneItem.note && (
+            <div className="mx-5 mb-3 flex items-center gap-2 rounded-2xl border border-solid border-accent bg-card py-1.5 pl-4 pr-1.5">
+              <button
+                onClick={() => openComment(doneItem.exerciseId)}
+                className="flex min-w-0 flex-1 flex-col items-start gap-0.5 border-0 bg-transparent p-0 py-1 text-left"
+              >
+                <span className="w-full truncate text-[13px] text-muted">✓ {name(doneItem.exerciseId)} — skończone</span>
+                <span className="text-[14px] font-extrabold text-accent">💬 Dodaj komentarz na następny raz</span>
+              </button>
+              <button
+                onClick={() => setJustDone(null)}
+                aria-label="Bez komentarza"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-0 bg-transparent text-muted"
+              >
+                <CloseIcon size={16} />
+              </button>
+            </div>
+          )}
+
+          {lastComment && (
+            <button
+              onClick={() => openComment(cur.exerciseId)}
+              className="mx-5 mb-3 flex w-[calc(100%-40px)] flex-col gap-0.5 rounded-2xl border-0 border-l-4 border-solid border-accent bg-soft px-4 py-2.5 text-left text-[14px] leading-snug text-ink"
+            >
+              <span className="text-[11px] font-extrabold tracking-wide text-accent">
+                💬 KOMENTARZ Z OSTATNIEGO RAZU · {shortDate(lastComment.date)}
+              </span>
+              <span>{lastComment.note}</span>
+            </button>
+          )}
+
+          {exercise?.note && (
             <button
               onClick={() => setSheet('menu')}
               className="mx-5 mb-3 flex w-[calc(100%-40px)] flex-col gap-1 rounded-2xl border-0 bg-soft px-4 py-2.5 text-left text-[13px] leading-snug text-ink"
             >
-              {exercise?.note && (
-                <span>
-                  <span className="font-extrabold">Notatka: </span>
-                  {exercise.note}
-                </span>
-              )}
-              {cur.note && (
-                <span>
-                  <span className="font-extrabold">Dziś: </span>
-                  {cur.note}
-                </span>
-              )}
+              <span>
+                <span className="font-extrabold">Notatka: </span>
+                {exercise.note}
+              </span>
             </button>
           )}
 
@@ -337,6 +378,21 @@ export function Workout({ id }: { id: number }) {
               + Dodaj serię
             </Button>
           </Card>
+
+          {/* Komentarz do ćwiczenia — pokaże się przy następnym treningu z tym ćwiczeniem */}
+          {cur.note ? (
+            <button
+              onClick={() => openComment(cur.exerciseId)}
+              className="mx-5 mt-3 flex w-[calc(100%-40px)] flex-col gap-0.5 rounded-2xl border border-solid border-line bg-card px-4 py-2.5 text-left text-[14px] leading-snug text-ink"
+            >
+              <span className="text-[11px] font-extrabold tracking-wide text-muted">💬 TWÓJ KOMENTARZ NA NASTĘPNY RAZ</span>
+              <span>{cur.note}</span>
+            </button>
+          ) : (
+            <Button variant="ghost" size="sm" onClick={() => openComment(cur.exerciseId)} className="mx-5 mt-2">
+              💬 Dodaj komentarz na następny raz
+            </Button>
+          )}
         </div>
       )}
 
@@ -441,7 +497,6 @@ export function Workout({ id }: { id: number }) {
       {sheet === 'menu' && cur && (
         <ExerciseMenu
           exercise={exercise}
-          note={cur.note ?? ''}
           nextName={nextItem ? name(nextItem.exerciseId) : undefined}
           linkedNext={linkedWithNext(items, i)}
           prevName={i > 0 ? name(items[i - 1].exerciseId) : undefined}
@@ -451,9 +506,7 @@ export function Workout({ id }: { id: number }) {
           onExerciseNote={(n) => exercise && db.exercises.update(exercise.id, { note: n.trim() || undefined })}
           canPermanent={workout.planDayId !== undefined}
           onClose={() => setSheet(null)}
-          onNote={(note) =>
-            db.workouts.update(id, { items: items.map((it) => (it.exerciseId === cur.exerciseId ? { ...it, note: note || undefined } : it)) })
-          }
+          onComment={() => openComment(cur.exerciseId)}
           onSwap={(permanent) => {
             setSwapPermanent(permanent)
             setSheet('swap')
@@ -464,6 +517,18 @@ export function Workout({ id }: { id: number }) {
             setSheet(null)
           }}
           onProgress={() => navigate({ name: 'cwiczenie', id: cur.exerciseId })}
+        />
+      )}
+      {sheet === 'comment' && commentFor !== null && (
+        <CommentSheet
+          exerciseName={name(commentFor)}
+          note={items.find((it) => it.exerciseId === commentFor)?.note ?? ''}
+          onSave={async (note) => {
+            await saveComment(commentFor, note)
+            if (commentFor === justDone) setJustDone(null)
+            setSheet(null)
+          }}
+          onClose={() => setSheet(null)}
         />
       )}
       {sheet === 'swap' && cur && (
@@ -626,7 +691,6 @@ export function SupersetLink() {
 
 function ExerciseMenu({
   exercise,
-  note,
   nextName,
   linkedNext,
   prevName,
@@ -636,13 +700,12 @@ function ExerciseMenu({
   onExerciseNote,
   canPermanent,
   onClose,
-  onNote,
+  onComment,
   onSwap,
   onRemove,
   onProgress,
 }: {
   exercise?: Exercise
-  note: string
   nextName?: string
   linkedNext: boolean
   prevName?: string
@@ -652,12 +715,11 @@ function ExerciseMenu({
   onExerciseNote: (n: string) => void
   canPermanent: boolean
   onClose: () => void
-  onNote: (n: string) => void
+  onComment: () => void
   onSwap: (permanent: boolean) => void
   onRemove: () => void
   onProgress: () => void
 }) {
-  const [n, setN] = useState(note)
   const [fixed, setFixed] = useState(exercise?.note ?? '')
   return (
     <Sheet title={exercise?.name ?? 'Ćwiczenie'} onClose={onClose}>
@@ -671,15 +733,9 @@ function ExerciseMenu({
             onExerciseNote(v)
           }}
         />
-        <TextField
-          label="Notatka tylko na dziś"
-          value={n}
-          placeholder="np. bolał bark"
-          onChange={(v) => {
-            setN(v)
-            onNote(v)
-          }}
-        />
+        <Button variant="soft" onClick={onComment}>
+          💬 Komentarz na następny raz
+        </Button>
         {nextName && (
           <Button variant={linkedNext ? 'outline' : 'soft'} onClick={onLinkNext} className="mt-2">
             {linkedNext ? `Rozłącz superserię z: ${nextName}` : `Superseria z następnym: ${nextName}`}
@@ -751,6 +807,46 @@ function FinishSheet({
         <Button variant="danger" onClick={onDiscard}>
           Odrzuć trening
         </Button>
+      </div>
+    </Sheet>
+  )
+}
+
+/** Komentarz do ćwiczenia w tym treningu — wyświetli się przy następnym treningu z tym ćwiczeniem. */
+function CommentSheet({
+  exerciseName,
+  note,
+  onSave,
+  onClose,
+}: {
+  exerciseName: string
+  note: string
+  onSave: (n: string) => void
+  onClose: () => void
+}) {
+  const [n, setN] = useState(note)
+  return (
+    <Sheet title={exerciseName} onClose={onClose}>
+      <div className="flex flex-col gap-3 px-5 pb-2">
+        <label className="flex flex-col gap-1.5 text-[13px] font-bold text-muted">
+          Komentarz — zobaczysz go przy następnym treningu
+          <textarea
+            value={n}
+            autoFocus
+            rows={3}
+            placeholder="np. następnym razem 62,5 kg · bolał bark · węższy chwyt"
+            onChange={(e) => setN(e.target.value)}
+            className="resize-none rounded-2xl border border-solid border-line bg-card px-4 py-3 text-base font-semibold text-ink outline-none focus:border-accent"
+          />
+        </label>
+        <Button size="lg" onClick={() => onSave(n)}>
+          Zapisz komentarz
+        </Button>
+        {note && (
+          <Button variant="danger" onClick={() => onSave('')}>
+            Usuń komentarz
+          </Button>
+        )}
       </div>
     </Sheet>
   )

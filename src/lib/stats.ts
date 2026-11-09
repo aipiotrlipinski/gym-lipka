@@ -17,6 +17,20 @@ export async function lastSessionSets(exerciseId: number, excludeWorkoutId?: num
   return sets.filter((s) => s.workoutId === last.id).sort((a, b) => a.order - b.order)
 }
 
+/**
+ * Komentarz do ćwiczenia z ostatniego zakończonego treningu z tym ćwiczeniem (np. „następnym razem 62,5 kg”).
+ * Tylko z ostatniego razu — starszy komentarz mógłby być już nieaktualny.
+ */
+export async function lastExerciseComment(
+  exerciseId: number,
+  excludeWorkoutId?: number,
+): Promise<{ note: string; date: number } | undefined> {
+  const { workouts } = await finishedWorkoutsWith(exerciseId, excludeWorkoutId)
+  const last = workouts[0]
+  const note = last?.items.find((i) => i.exerciseId === exerciseId)?.note?.trim()
+  return last && note ? { note, date: last.startedAt } : undefined
+}
+
 /** Ciężar serii roboczych z ostatniego treningu z tym ćwiczeniem (najcięższa seria) albo undefined. */
 export async function lastWorkingWeight(exerciseId: number): Promise<number | undefined> {
   const work = (await lastSessionSets(exerciseId)).filter((s) => s.type !== 'rozgrzewka')
@@ -111,6 +125,8 @@ export interface SessionPoint {
   totalDistance: number
   /** Średnia prędkość km/h (cardio z dystansem i czasem), 0 gdy brak. */
   speed: number
+  /** Komentarz do ćwiczenia z tego treningu. */
+  note?: string
   sets: WorkoutSet[]
 }
 
@@ -139,6 +155,7 @@ export async function exerciseHistory(exerciseId: number): Promise<SessionPoint[
         totalDuration: work.reduce((a, s) => a + (s.durationSec ?? 0), 0),
         totalDistance: work.reduce((a, s) => a + (s.distanceM ?? 0), 0),
         speed: speedOf(work),
+        note: w.items.find((i) => i.exerciseId === exerciseId)?.note,
         sets: ws,
       }
     })
