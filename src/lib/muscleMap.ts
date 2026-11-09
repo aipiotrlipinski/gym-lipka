@@ -63,3 +63,28 @@ export function exercisesFor(muscle: MuscleId, all: Exercise[]) {
 export function fmtSets(n: number) {
   return Number.isInteger(n) ? String(n) : n.toFixed(1).replace('.', ',')
 }
+
+/** Rola mięśnia w planie: 2 = pracuje głównie (w którymś ćwiczeniu), 1 = tylko pomocniczo, 0 = wcale. */
+export type PlanRole = 0 | 1 | 2
+
+/** Które mięśnie pracują w ćwiczeniach planu (dnia albo całego planu). */
+export function planRoles(exerciseIds: number[], exercises: Map<number, Pick<Exercise, 'name' | 'muscle'>>): Record<MuscleId, PlanRole> {
+  const roles = Object.fromEntries(MUSCLE_LIST.map((m) => [m.id, 0])) as Record<MuscleId, PlanRole>
+  for (const id of exerciseIds) {
+    const e = exercises.get(id)
+    if (!e) continue
+    const [primary, secondary] = targetsOf(e)
+    for (const m of secondary) if (roles[m] === 0) roles[m] = 1
+    for (const m of primary) roles[m] = 2
+  }
+  return roles
+}
+
+/** Ćwiczenia planu, w których pracuje mięsień: najpierw główne, potem pomocnicze (bez powtórzeń). */
+export function planExercisesFor<E extends Pick<Exercise, 'id' | 'name' | 'muscle'>>(muscle: MuscleId, exerciseIds: number[], exercises: Map<number, E>) {
+  const list = [...new Set(exerciseIds)].map((id) => exercises.get(id)).filter((e): e is E => !!e)
+  return {
+    primary: list.filter((e) => targetsOf(e)[0].includes(muscle)),
+    secondary: list.filter((e) => !targetsOf(e)[0].includes(muscle) && targetsOf(e)[1].includes(muscle)),
+  }
+}

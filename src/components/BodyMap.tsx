@@ -53,12 +53,16 @@ export function BodyMap({
   levels,
   selected,
   onSelect,
+  zoom = true,
   style,
 }: {
   side: Side
   levels: Record<MuscleId, number>
   selected: MuscleId | null
-  onSelect: (id: MuscleId) => void
+  /** Brak = sam podgląd (miniatura), bez stukania. */
+  onSelect?: (id: MuscleId) => void
+  /** Czy wybór mięśnia przybliża rysunek (mapa mięśni) — w planach tylko go obwodzimy. */
+  zoom?: boolean
   style?: CSSProperties
 }) {
   const svg = useRef<SVGSVGElement>(null)
@@ -69,7 +73,7 @@ export function BodyMap({
 
   // Przybliżenie / oddalenie z płynnym przejściem (przy pierwszym wyświetleniu — od razu).
   useLayoutEffect(() => {
-    const target = (selected && svg.current && zoomBox(svg.current, selected)) || FULL
+    const target = (zoom && selected && svg.current && zoomBox(svg.current, selected)) || FULL
     const from = current.current
     if (first.current || reducedMotion()) {
       first.current = false
@@ -94,9 +98,10 @@ export function BodyMap({
     }
     raf = requestAnimationFrame(step)
     return () => cancelAnimationFrame(raf)
-  }, [selected, side])
+  }, [selected, side, zoom])
 
   function tap(e: React.PointerEvent<SVGSVGElement>) {
+    if (!onSelect) return
     const hit = (e.target as Element).closest('g[data-m]')?.getAttribute('data-m') as MuscleId | null
     if (hit) return onSelect(hit)
     const el = svg.current
@@ -124,10 +129,10 @@ export function BodyMap({
       ref={svg}
       viewBox={`${box.x} ${box.y} ${box.w} ${box.h}`}
       preserveAspectRatio="xMidYMid meet"
-      onPointerUp={tap}
+      onPointerUp={onSelect ? tap : undefined}
       role="img"
       aria-label={side === 'przod' ? 'Sylwetka z przodu' : 'Sylwetka z tyłu'}
-      className="block w-full touch-manipulation select-none"
+      className={`block w-full select-none ${onSelect ? 'touch-manipulation' : 'pointer-events-none'}`}
       style={style}
     >
       <g fill={BODY_FILL}>
@@ -149,7 +154,7 @@ export function BodyMap({
           <g
             key={m.id}
             data-m={m.id}
-            className="cursor-pointer"
+            className={onSelect ? 'cursor-pointer' : undefined}
             style={{ opacity: selected && !active ? 0.55 : 1, transition: 'opacity 250ms' }}
           >
             {m.d.map((d, i) => (

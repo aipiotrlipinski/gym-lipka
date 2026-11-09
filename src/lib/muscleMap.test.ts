@@ -3,7 +3,7 @@ import type { Exercise } from '../db'
 import { BUILTIN_EXERCISES } from '../data/exercises'
 import { EXERCISE_MUSCLES, MUSCLE_LIST, muscleAt, muscleIndex } from '../data/muscles'
 import { NEW_EXERCISES } from './gymrun'
-import { exercisesFor, fmtSets, level, muscleVolume, targetsOf } from './muscleMap'
+import { exercisesFor, fmtSets, level, muscleVolume, planExercisesFor, planRoles, targetsOf } from './muscleMap'
 import { FRONT, BACK } from '../components/bodyShapes'
 
 const ex = (id: number, name: string, muscle: Exercise['muscle'] = 'inne'): Exercise => ({ id, name, muscle, equipment: 'inne', custom: false })
@@ -64,5 +64,30 @@ describe('mapa mięśni', () => {
     expect(muscleAt(99)).toBeUndefined()
     expect(fmtSets(4.5)).toBe('4,5')
     expect(fmtSets(3)).toBe('3')
+  })
+})
+
+describe('mięśnie w planie', () => {
+  const all = new Map([
+    [1, ex(1, 'Wyciskanie sztangi na ławce płaskiej', 'klatka')],
+    [2, ex(2, 'Uginanie ramion ze sztangą', 'ramiona')],
+    [3, ex(3, 'Wyciskanie francuskie sztangi leżąc', 'ramiona')],
+  ])
+
+  it('główny mięsień w jednym ćwiczeniu wygrywa z pomocniczym w innym', () => {
+    const r = planRoles([1, 2], all)
+    expect(r.klatka).toBe(2)
+    expect(r.biceps).toBe(2)
+    expect(r.triceps).toBe(1)
+    expect(r.przedramiona).toBe(1)
+    expect(r.lydki).toBe(0)
+    expect(planRoles([1, 3], all).triceps).toBe(2)
+    expect(planRoles([], all).klatka).toBe(0)
+  })
+
+  it('lista ćwiczeń planu na mięsień: główne i pomocnicze osobno, bez powtórzeń', () => {
+    const t = planExercisesFor('triceps', [1, 3, 3, 2], all)
+    expect(t.primary.map((e) => e.id)).toEqual([3])
+    expect(t.secondary.map((e) => e.id)).toEqual([1])
   })
 })

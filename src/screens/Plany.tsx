@@ -7,6 +7,7 @@ import { Badge, Button, Card, Confirm, Empty, RoundButton, ScreenTitle, SectionL
 import { ChevronIcon, DownIcon, TrashIcon, UpIcon } from '../components/icons'
 import { ExercisePicker, useExercises } from '../components/exercises'
 import { ExerciseThumb } from '../components/ExercisePhoto'
+import { PlanMuscles, PlanMusclesThumb } from '../components/PlanMuscles'
 import { clock, kg, meters, secs } from '../lib/format'
 import { lastWorkingTargets } from '../lib/stats'
 import { defaultsFor, fieldsOf, measureOf, measureShort } from '../lib/measure'
@@ -133,13 +134,15 @@ export function Plany() {
             onClick={() => navigate({ name: 'plan', id: plan.id })}
             className="flex items-center justify-between gap-3 border-0 bg-transparent p-0 text-left"
           >
-            <div className="flex min-w-0 flex-col gap-0.5">
+            <div className="flex min-w-0 flex-1 flex-col items-start gap-1">
               <span className="text-[19px] font-extrabold text-ink">{plan.name}</span>
               <span className="text-[13px] text-muted">
                 {days.length} {days.length === 1 ? 'dzień' : 'dni'} · rotacja
               </span>
+              {plan.active && <Badge tone="accent">AKTYWNY</Badge>}
             </div>
-            {plan.active ? <Badge tone="accent">AKTYWNY</Badge> : <ChevronIcon />}
+            <PlanMusclesThumb exerciseIds={days.flatMap((d) => d.exercises.map((e) => e.exerciseId))} exercises={exercises} height={76} />
+            {!plan.active && <ChevronIcon />}
           </button>
           {plan.active && days.some((d) => d.exercises.length > 0) && (
             <span className="text-[12px] text-muted">Obciążenie, czas i dystans wpisujesz tutaj — trening zacznie od tych wartości.</span>
@@ -159,14 +162,12 @@ export function Plany() {
                     <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                       <span className="text-[15px] font-bold text-ink">{d.name}</span>
                       {d.exercises.length === 0 && <span className="text-xs text-muted">brak ćwiczeń — stuknij, żeby dodać</span>}
+                      {isNext && <span className="text-[11px] font-extrabold text-accent">NASTĘPNY</span>}
                     </div>
-                    {isNext ? (
-                      <span className="text-[11px] font-extrabold text-accent">NASTĘPNY</span>
-                    ) : (
-                      <span className="text-muted">
-                        <ChevronIcon />
-                      </span>
-                    )}
+                    {d.exercises.length > 0 && <PlanMusclesThumb exerciseIds={d.exercises.map((e) => e.exerciseId)} exercises={exercises} height={60} />}
+                    <span className="text-muted">
+                      <ChevronIcon />
+                    </span>
                   </button>
                   {d.exercises.length > 0 && (
                     <div className="flex flex-col gap-1.5 px-2 pb-2">
@@ -221,6 +222,7 @@ export function Plany() {
 export function PlanEdit({ id }: { id: number }) {
   const plan = useLiveQuery(() => db.plans.get(id), [id])
   const days = useLiveQuery(async () => (await db.planDays.where('planId').equals(id).toArray()).sort((a, b) => a.order - b.order), [id])
+  const exercises = useExercises()
   const [confirmDelete, setConfirmDelete] = useState(false)
 
   if (plan === undefined || days === undefined) return null
@@ -283,6 +285,7 @@ export function PlanEdit({ id }: { id: number }) {
               </span>
               <span className="text-xs text-muted">{d.exercises.length} ćwiczeń</span>
             </button>
+            {d.exercises.length > 0 && <PlanMusclesThumb exerciseIds={d.exercises.map((e) => e.exerciseId)} exercises={exercises} height={60} />}
             <RoundButton label={`Przesuń ${d.name} w górę`} onClick={() => move(i, -1)}>
               <UpIcon />
             </RoundButton>
@@ -295,6 +298,9 @@ export function PlanEdit({ id }: { id: number }) {
           + Dodaj dzień
         </Button>
       </div>
+
+      <SectionLabel>MIĘŚNIE W PLANIE</SectionLabel>
+      <PlanMuscles exerciseIds={days.flatMap((d) => d.exercises.map((e) => e.exerciseId))} exercises={exercises} />
 
       <div className="mx-4 mt-8">
         <Button variant="danger" onClick={() => setConfirmDelete(true)} className="w-full">
@@ -442,6 +448,9 @@ export function DayEdit({ id }: { id: number }) {
           + Dodaj ćwiczenie
         </Button>
       </div>
+
+      <SectionLabel>MIĘŚNIE W TYM DNIU</SectionLabel>
+      <PlanMuscles exerciseIds={day.exercises.map((e) => e.exerciseId)} exercises={exercises} />
 
       <div className="mx-4 mt-6 flex flex-col gap-2">
         <Button size="lg" onClick={start} disabled={day.exercises.length === 0}>
