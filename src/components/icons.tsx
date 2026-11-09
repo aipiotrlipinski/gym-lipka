@@ -37,6 +37,13 @@ export const DumbbellIcon = ({ size = 22 }: P) => (
   </svg>
 )
 
+export const BodyIcon = ({ size = 22 }: P) => (
+  <svg {...base(size)}>
+    <circle cx="12" cy="4.5" r="2" />
+    <path d="M5 9.5c2.5 1 4.5 1.3 7 1.3s4.5-.3 7-1.3M12 10.8V15M9 21l1.2-6h3.6L15 21" />
+  </svg>
+)
+
 export const GearIcon = ({ size = 20 }: P) => (
   <svg {...base(size)}>
     <circle cx="12" cy="12" r="3" />

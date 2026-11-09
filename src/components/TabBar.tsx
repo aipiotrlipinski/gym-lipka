@@ -1,19 +1,20 @@
 import type { ReactNode } from 'react'
-import { CalendarIcon, DumbbellIcon, HomeIcon, ListIcon } from './icons'
+import { BodyIcon, CalendarIcon, DumbbellIcon, HomeIcon, ListIcon } from './icons'
 
-export type Tab = 'start' | 'plany' | 'historia' | 'cwiczenia'
+export type Tab = 'start' | 'plany' | 'historia' | 'cwiczenia' | 'miesnie'
 
 const TABS: { id: Tab; label: string; icon: ReactNode }[] = [
   { id: 'start', label: 'Start', icon: <HomeIcon /> },
   { id: 'plany', label: 'Plany', icon: <ListIcon /> },
   { id: 'historia', label: 'Historia', icon: <CalendarIcon /> },
   { id: 'cwiczenia', label: 'Ćwiczenia', icon: <DumbbellIcon /> },
+  { id: 'miesnie', label: 'Mięśnie', icon: <BodyIcon /> },
 ]
 
 export function TabBar({ tab, onChange }: { tab: Tab; onChange: (t: Tab) => void }) {
   return (
     <nav
-      className="grid grid-cols-4 border-t border-line bg-card px-2 pt-2"
+      className="grid grid-cols-5 border-t border-line bg-card px-2 pt-2"
       style={{ paddingBottom: 'max(12px, env(safe-area-inset-bottom))' }}
     >
       {TABS.map((t) => {

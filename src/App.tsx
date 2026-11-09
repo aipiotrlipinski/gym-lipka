@@ -13,6 +13,7 @@ import { ExerciseDetail } from './screens/ExerciseDetail'
 import { Workout } from './screens/Workout'
 import { Session } from './screens/Session'
 import { Settings } from './screens/Settings'
+import { Miesnie } from './screens/Miesnie'
 
 /** Skrót „Zacznij trening” z ikony: od razu otwiera trening (trwający albo następny z planu). */
 let quickStarting: Promise<number> | null = null
@@ -49,6 +50,8 @@ function tabOf(r: Route): Tab | null {
     case 'cwiczenia':
     case 'cwiczenie':
       return 'cwiczenia'
+    case 'miesnie':
+      return 'miesnie'
     default:
       return null
   }
@@ -79,6 +82,8 @@ function Screen({ route }: { route: Route }) {
       return <Session id={route.id} />
     case 'ustawienia':
       return <Settings mode={mode} setMode={setMode} onClose={() => back({ name: 'start' })} />
+    case 'miesnie':
+      return <Miesnie id={route.id} />
     case 'szybki-start':
       return <QuickStart />
   }
@@ -109,7 +114,8 @@ export default function App() {
   return (
     <div className="mx-auto flex h-full max-w-[480px] flex-col">
       <main ref={main} className="flex-1 overflow-y-auto" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
-        <Screen key={'id' in route ? `${route.name}-${route.id}` : route.name} route={route} />
+        {/* Mapa mięśni zostaje ta sama przy zmianie mięśnia — wtedy przybliżenie jest płynne. */}
+        <Screen key={'id' in route && route.name !== 'miesnie' ? `${route.name}-${route.id}` : route.name} route={route} />
       </main>
       {tab && <TabBar tab={tab} onChange={(t) => navigate({ name: t }, true)} />}
     </div>

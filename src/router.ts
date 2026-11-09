@@ -16,6 +16,8 @@ export type Route =
   | { name: 'podsumowanie'; id: number }
   | { name: 'sesja'; id: number }
   | { name: 'ustawienia' }
+  /** Mapa mięśni; id = wybrany mięsień (pozycja na liście w data/muscles.ts), brak = cała sylwetka. */
+  | { name: 'miesnie'; id?: number }
   /** Skrót z ikony aplikacji: wznawia trwający trening albo zaczyna następny dzień planu. */
   | { name: 'szybki-start' }
 
@@ -36,13 +38,15 @@ export function parse(hash: string): Route {
     case 'podsumowanie':
     case 'sesja':
       return Number.isFinite(id) && id > 0 ? { name: a, id } : { name: 'start' }
+    case 'miesnie':
+      return Number.isInteger(id) && id > 0 ? { name: a, id } : { name: a }
     default:
       return { name: 'start' }
   }
 }
 
 export function href(r: Route) {
-  return 'id' in r ? `#/${r.name}/${r.id}` : `#/${r.name}`
+  return 'id' in r && r.id !== undefined ? `#/${r.name}/${r.id}` : `#/${r.name}`
 }
 
 /** Wpisy historii dodane przez aplikację są oznaczone, żeby „Wstecz” nie wyszło z aplikacji. */
